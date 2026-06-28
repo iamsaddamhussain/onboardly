@@ -48,11 +48,12 @@ export function useResourceMutation<TData, TVars>(
   return useMutation<TData, unknown, TVars>({
     mutationFn,
     ...options,
-    onSuccess: (data, vars, ctx) => {
+    onSuccess: (...args: unknown[]) => {
       invalidate.forEach((endpoint) =>
         queryClient.invalidateQueries({ queryKey: [endpoint] }),
       )
-      options?.onSuccess?.(data, vars, ctx)
+      const onSuccess = options?.onSuccess as ((...a: unknown[]) => unknown) | undefined
+      onSuccess?.(...args)
     },
   })
 }
