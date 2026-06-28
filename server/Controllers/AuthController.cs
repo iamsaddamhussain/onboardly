@@ -61,6 +61,42 @@ public class AuthController : ControllerBase
         return Ok(new UserResponse(id, email));
     }
 
+    [Authorize]
+    [HttpGet("profile")]
+    public async Task<IActionResult> Profile()
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _auth.GetByIdAsync(id);
+        if (user is null)
+            return NotFound(new { message = "Profile not found." });
+
+        return Ok(ToProfile(user));
+    }
+
+    [Authorize]
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _auth.GetByIdAsync(id);
+        if (user is null)
+            return NotFound(new { message = "Profile not found." });
+
+        await _auth.UpdateProfileAsync(user, request);
+        return Ok(ToProfile(user));
+    }
+
+    private static ProfileResponse ToProfile(Onboardly.Server.Models.User user) => new(
+        user.Id,
+        user.FirstName,
+        user.LastName,
+        user.Email,
+        user.Mobile,
+        user.City,
+        user.JobTitle,
+        user.IsActive,
+        user.CreatedAt);
+
     private async Task SignInAsync(int userId, string email)
     {
         var claims = new List<Claim>

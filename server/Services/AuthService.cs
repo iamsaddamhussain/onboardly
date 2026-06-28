@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Onboardly.Server.Data;
+using Onboardly.Server.Dtos;
 using Onboardly.Server.Models;
 
 namespace Onboardly.Server.Services;
@@ -51,5 +52,18 @@ public class AuthService : IAuthService
         }
 
         return user;
+    }
+
+    public Task<User?> GetByIdAsync(int id) =>
+        _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+    public async Task UpdateProfileAsync(User user, UpdateProfileRequest request)
+    {
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.Mobile = request.Mobile?.Trim();
+        user.City = request.City?.Trim();
+        user.JobTitle = request.JobTitle?.Trim();
+        await _db.SaveChangesAsync();
     }
 }

@@ -41,7 +41,7 @@ export function ProfileMenu() {
 
       <DropdownMenuContent align="end" className="w-64 p-2">
         <DropdownMenuItem
-          onSelect={() => navigate("/settings")}
+          onSelect={() => navigate("/profile")}
           className="gap-3 px-3 py-2.5"
         >
           <UserIcon className="size-4" /> My Profile

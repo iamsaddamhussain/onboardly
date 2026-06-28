@@ -30,6 +30,8 @@ export interface DataTableProps<Row> {
   countNoun?: string
   /** Extra controls rendered next to the search box. */
   toolbar?: ReactNode
+  /** Content rendered between the toolbar and the table (e.g. applied filters). */
+  beforeTable?: ReactNode
 }
 
 const alignClass: Record<string, string> = {
@@ -52,6 +54,7 @@ export function DataTable<Row>({
   emptyMessage = "No records found.",
   countNoun = "record",
   toolbar,
+  beforeTable,
 }: DataTableProps<Row>) {
   const table = useDataTable<Row>({ url, sendData, defaults })
   const visibleColumns = columns.filter((col) => col.visible)
@@ -75,6 +78,8 @@ export function DataTable<Row>({
           {toolbar}
         </div>
       )}
+
+      {beforeTable}
 
       <Card className="gap-0 overflow-hidden rounded-none p-0">
         {/* Thin loading indicator that doesn't shift layout. */}

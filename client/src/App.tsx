@@ -7,6 +7,7 @@ import LoginPage from "@/pages/Login"
 import DashboardPage from "@/pages/Dashboard"
 import UsersPage from "@/pages/Users"
 import NewUserPage from "@/pages/NewUser"
+import ProfilePage from "@/pages/Profile"
 import SettingsPage from "@/pages/Settings"
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/users/new" element={<NewUserPage />} />
         <Route path="/users/:id/edit" element={<NewUserPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -33,6 +33,26 @@ export interface User {
   email: string
 }
 
+export interface Profile {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  mobile: string | null
+  city: string | null
+  jobTitle: string | null
+  isActive: boolean
+  createdAt: string
+}
+
+export interface UpdateProfileInput {
+  firstName: string
+  lastName: string
+  mobile?: string
+  city?: string
+  jobTitle?: string
+}
+
 export interface ManagedUser {
   id: number
   firstName: string
@@ -213,4 +233,11 @@ export const api = {
         skipErrorToast: true,
       } as RequestConfig)
       .then((r) => r.data),
+
+  // --- Profile ---
+  getProfile: () =>
+    http.get<Profile>("/api/auth/profile").then((r) => r.data),
+
+  updateProfile: (data: UpdateProfileInput) =>
+    http.put<Profile>("/api/auth/profile", data).then((r) => r.data),
 }
