@@ -1,0 +1,216 @@
+// Axios client with centralised error handling.
+//
+// Every request sends the auth cookie (withCredentials). A single response
+// interceptor turns any failure into a user-friendly toast and a normalised
+// `ApiError`, so callers never need their own try/catch just to report errors:
+//   - 401 -> trigger the registered "unauthorized" handler (redirect to login)
+//   - everything else -> show a toast with the best available message
+//
+// Errors are still rejected so callers *can* react (e.g. skip a state update),
+// but unhandled ApiErrors are silenced globally to avoid console noise.
+
+import axios, {
+  AxiosError,
+  type InternalAxiosRequestConfig,
+} from "axios"
+import { toast } from "sonner"
+
+export class ApiError extends Error {
+  status: number
+  // Per-field validation messages (camelCase keys), when the server returns a
+  // ValidationProblemDetails response.
+  errors?: Record<string, string[]>
+  constructor(status: number, message: string, errors?: Record<string, string[]>) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+    this.errors = errors
+  }
+}
+
+export interface User {
+  id: number
+  email: string
+}
+
+export interface ManagedUser {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  mobile: string | null
+  city: string | null
+  jobTitle: string | null
+  isActive: boolean
+  createdAt: string
+}
+
+export interface CreateUserInput {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  mobile?: string
+  city?: string
+  jobTitle?: string
+  isActive: boolean
+}
+
+export interface DashboardStats {
+  totalUsers: number
+  activeUsers: number
+  inactiveUsers: number
+  newThisMonth: number
+}
+
+export type UserSortField =
+  | "name"
+  | "email"
+  | "city"
+  | "jobTitle"
+  | "status"
+  | "joined"
+
+export interface UsersQuery {
+  search?: string
+  sortBy?: UserSortField
+  sortDir?: "asc" | "desc"
+  page?: number
+  pageSize?: number
+}
+
+export interface PagedResult<T> {
+  items: T[]
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+}
+
+// Per-request options understood by our interceptor.
+type RequestConfig = InternalAxiosRequestConfig & {
+  // Skip the global redirect-to-login behaviour for an expected 401
+  // (e.g. the initial "who am I?" probe for guests).
+  skipAuthRedirect?: boolean
+  // Suppress the error toast for this request.
+  skipErrorToast?: boolean
+}
+
+// The auth layer registers a callback so the interceptor can redirect on 401
+// without importing the router here.
+let onUnauthorized: (() => void) | null = null
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler
+}
+
+export const http = axios.create({
+  baseURL: "/",
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+})
+
+// Shape of an error response body from the API. Plain errors carry a
+// `message`; validation failures carry a per-field `errors` dictionary
+// (ASP.NET ValidationProblemDetails).
+interface ApiErrorBody {
+  message?: string
+  errors?: Record<string, string[]>
+}
+
+function messageFor(error: AxiosError<ApiErrorBody>): string {
+  const status = error.response?.status
+  const fromServer = error.response?.data?.message
+  if (fromServer) return fromServer
+  if (error.code === "ERR_NETWORK") return "Cannot reach the server. Is it running?"
+  switch (status) {
+    case 400:
+      return "That request looks invalid. Please check your input."
+    case 401:
+      return "Your session has expired. Please sign in again."
+    case 403:
+      return "You don't have permission to do that."
+    case 404:
+      return "We couldn't find what you were looking for."
+    case 409:
+      return "That conflicts with existing data."
+    case 422:
+      return "Some of the submitted data was invalid."
+    default:
+      return status && status >= 500
+        ? "Something went wrong on our end. Please try again."
+        : "Something went wrong. Please try again."
+  }
+}
+
+// Normalise camelCase keys so they line up with form field names.
+function normaliseFieldErrors(
+  errors?: Record<string, string[]>,
+): Record<string, string[]> | undefined {
+  if (!errors) return undefined
+  const out: Record<string, string[]> = {}
+  for (const [key, messages] of Object.entries(errors)) {
+    if (!key) continue
+    const field = key.charAt(0).toLowerCase() + key.slice(1)
+    out[field] = messages
+  }
+  return out
+}
+
+http.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<ApiErrorBody>) => {
+    const config = error.config as RequestConfig | undefined
+    const status = error.response?.status ?? 0
+    const message = messageFor(error)
+    const fieldErrors = normaliseFieldErrors(error.response?.data?.errors)
+
+    if (status === 401 && !config?.skipAuthRedirect) {
+      // Genuine "session expired" 401 -> let the app redirect to login.
+      onUnauthorized?.()
+    } else if (!config?.skipErrorToast && !fieldErrors) {
+      // Field validation errors are shown inline by the form, so only toast
+      // for everything else (including login failures).
+      toast.error(message)
+    }
+
+    return Promise.reject(new ApiError(status, message, fieldErrors))
+  }
+)
+
+// ApiErrors are already surfaced to the user (toast / redirect); prevent
+// "unhandled rejection" noise when a caller intentionally doesn't catch.
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", (event) => {
+    if (event.reason instanceof ApiError) event.preventDefault()
+  })
+}
+
+export const api = {
+  // --- Auth ---
+  // A failed login returns 401; skip the global redirect so the user stays on
+  // the form and just sees the error toast.
+  login: (email: string, password: string) =>
+    http
+      .post<User>("/api/auth/login", { email, password }, {
+        skipAuthRedirect: true,
+      } as RequestConfig)
+      .then((r) => r.data),
+
+  register: (email: string, password: string) =>
+    http
+      .post<User>("/api/auth/register", { email, password }, {
+        skipAuthRedirect: true,
+      } as RequestConfig)
+      .then((r) => r.data),
+
+  logout: () => http.post<void>("/api/auth/logout").then(() => undefined),
+
+  // Guests legitimately get a 401 here on first load, so don't redirect/toast.
+  me: () =>
+    http
+      .get<User>("/api/auth/me", {
+        skipAuthRedirect: true,
+        skipErrorToast: true,
+      } as RequestConfig)
+      .then((r) => r.data),
+}
