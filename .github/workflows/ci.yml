@@ -99,38 +99,31 @@ jobs:
             ${{ steps.img.outputs.prefix }}-client:${{ github.sha }}
 
   # --- Deploy to the home server over SSH (only on main) ---
+  # --- Deploy on the home server itself via a self-hosted runner ---
+  # The runner connects OUT to GitHub, so no inbound networking, port
+  # forwarding, public IP or SSH keys are needed (works behind CGNAT).
   deploy:
     name: Deploy to home server
     needs: images
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    env:
+      # Keeps the compose project (and its db-data volume) stable across runs.
+      COMPOSE_PROJECT_NAME: onboardly
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy compose file to the server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          source: docker-compose.yml
-          target: ~/onboardly
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Pull & restart containers
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          script: |
-            cd ~/onboardly
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            export SERVER_IMAGE="${{ needs.images.outputs.prefix }}-server:latest"
-            export CLIENT_IMAGE="${{ needs.images.outputs.prefix }}-client:latest"
-            docker compose pull
-            docker compose up -d
-            docker image prune -f
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SERVER_IMAGE: ${{ needs.images.outputs.prefix }}-server:latest
+          CLIENT_IMAGE: ${{ needs.images.outputs.prefix }}-client:latest
+        run: |
+          docker compose pull
+          docker compose up -d
+          docker image prune -f
+
 
