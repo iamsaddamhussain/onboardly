@@ -1,1 +1,4 @@
 node_modules
+
+# Local secrets / runtime env (lives only on the server, never committed)
+.env
