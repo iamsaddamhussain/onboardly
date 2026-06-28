@@ -3,9 +3,9 @@ name: CI
 # Builds and validates both apps in the monorepo on every push / PR.
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 jobs:
   # --- ASP.NET Core API (server/) ---
@@ -57,7 +57,7 @@ jobs:
   images:
     name: Build & push images
     needs: [server, client]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -102,7 +102,7 @@ jobs:
   deploy:
     name: Deploy to home server
     needs: images
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
