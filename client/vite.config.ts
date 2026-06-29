@@ -20,8 +20,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      host: true,
+      host: devHost,
       port: devPort,
+      open: `http://${devHost}:${devPort}/`,
       // Allow the Laragon-style "magic host". *.localhost auto-resolves to
       // 127.0.0.1 in modern browsers, so http://<DEV_HOST>:<DEV_PORT> works.
       allowedHosts: [devHost],
