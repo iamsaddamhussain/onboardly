@@ -94,6 +94,10 @@ export default function ProfilePage() {
       title="My Profile"
       icon={UserIcon}
       description="View and update your personal details."
+      breadcrumbs={[
+        { label: "Dashboard", to: "/dashboard" },
+        { label: "My Profile" },
+      ]}
       loading={isLoading}
     >
       <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-4">

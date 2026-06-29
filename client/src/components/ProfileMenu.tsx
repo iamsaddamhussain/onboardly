@@ -47,17 +47,24 @@ export function ProfileMenu() {
           <UserIcon className="size-4" /> My Profile
         </DropdownMenuItem>
 
-        {/* Plain row so toggling the switch doesn't close the menu. */}
-        <div className="flex cursor-pointer items-center justify-between gap-2 px-3 py-2.5 text-sm">
+        {/* Same look as the other items; preventDefault keeps the menu open. */}
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            setTheme(isDark ? "light" : "dark")
+          }}
+          className="justify-between gap-3 px-3 py-2.5"
+        >
           <span className="flex items-center gap-3">
             <Moon className="size-4" /> Dark Mode
           </span>
           <Switch
             checked={isDark}
-            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-            aria-label="Toggle dark mode"
+            aria-hidden
+            tabIndex={-1}
+            className="pointer-events-none"
           />
-        </div>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

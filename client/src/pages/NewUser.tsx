@@ -155,6 +155,11 @@ export default function UserFormPage() {
           ? "Update this person's details."
           : "Add a new person to your workspace."
       }
+      breadcrumbs={[
+        { label: "Dashboard", to: "/dashboard" },
+        { label: "Users", to: "/users" },
+        { label: editing ? "Edit User" : "New User" },
+      ]}
       loading={editing && isLoading}
       actions={
         <Button

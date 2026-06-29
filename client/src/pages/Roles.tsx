@@ -68,6 +68,10 @@ export default function RolesPage() {
       title="Roles & Permissions"
       icon={ShieldCheck}
       description="Create roles, define permissions, and choose what each role can do."
+      breadcrumbs={[
+        { label: "Dashboard", to: "/dashboard" },
+        { label: "Roles & Permissions" },
+      ]}
       loading={isLoading}
     >
       <div className="flex flex-col gap-4">

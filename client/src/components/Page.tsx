@@ -1,6 +1,22 @@
-import { type ComponentType, type ReactNode } from "react"
+import { Fragment, type ComponentType, type ReactNode } from "react"
+import { Link } from "react-router-dom"
 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { cn } from "@/lib/utils"
+
+/** A single entry in the page breadcrumb trail. */
+export interface Crumb {
+  label: string
+  /** When set, the crumb links here. The last crumb is rendered as plain text. */
+  to?: string
+}
 
 interface PageProps {
   /** Optional page heading. */
@@ -9,6 +25,8 @@ interface PageProps {
   icon?: ComponentType<{ className?: string }>
   /** Optional supporting text under the heading. */
   description?: string
+  /** Optional breadcrumb trail shown above the heading. */
+  breadcrumbs?: Crumb[]
   /** Optional actions rendered on the right of the header (buttons, etc.). */
   actions?: ReactNode
   /** When true, shows a centered spinner instead of the content. */
@@ -27,6 +45,7 @@ export function Page({
   title,
   icon: Icon,
   description,
+  breadcrumbs,
   actions,
   loading = false,
   children,
@@ -48,6 +67,29 @@ export function Page({
       )}
     >
       <FlowerBackdrop />
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbs.map((crumb, index) => {
+              const isLast = index === breadcrumbs.length - 1
+              return (
+                <Fragment key={`${crumb.label}-${index}`}>
+                  <BreadcrumbItem>
+                    {isLast || !crumb.to ? (
+                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link to={crumb.to}>{crumb.label}</Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator />}
+                </Fragment>
+              )
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
       {(title || description || actions) && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">

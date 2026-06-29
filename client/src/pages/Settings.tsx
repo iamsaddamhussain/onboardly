@@ -22,7 +22,15 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <Page title="Settings" icon={SettingsIcon} description="Manage your workspace preferences.">
+    <Page
+      title="Settings"
+      icon={SettingsIcon}
+      description="Manage your workspace preferences."
+      breadcrumbs={[
+        { label: "Dashboard", to: "/dashboard" },
+        { label: "Settings" },
+      ]}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Appearance</CardTitle>

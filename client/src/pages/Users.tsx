@@ -82,6 +82,10 @@ export default function UsersPage() {
       title="Users"
       icon={Users}
       description="Manage the people in your workspace."
+      breadcrumbs={[
+        { label: "Dashboard", to: "/dashboard" },
+        { label: "Users" },
+      ]}
       actions={
         <Button className="rounded-none" onClick={() => navigate("/users/new")}>
           <Plus /> New User
