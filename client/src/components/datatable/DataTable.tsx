@@ -34,6 +34,8 @@ export interface DataTableProps<Row> {
   toolbar?: ReactNode
   /** Content rendered between the toolbar and the table (e.g. applied filters). */
   beforeTable?: ReactNode
+  /** Show a centered page-level loader on the first load instead of an in-table row. */
+  fullPageLoading?: boolean
 }
 
 const alignClass: Record<string, string> = {
@@ -58,10 +60,19 @@ export function DataTable<Row>({
   emptyIcon: EmptyIcon = Inbox,
   toolbar,
   beforeTable,
+  fullPageLoading = false,
 }: DataTableProps<Row>) {
   const table = useDataTable<Row>({ url, sendData, defaults })
   const visibleColumns = columns.filter((col) => col.visible)
   const colCount = visibleColumns.length
+
+  if (fullPageLoading && table.isLoading) {
+    return (
+      <div className="animate-page text-primary">
+        <span className="text-4xl font-semibold">Loading…</span>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-3">

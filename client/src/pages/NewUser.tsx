@@ -48,7 +48,7 @@ export default function UserFormPage() {
   const { data: rolesData } = useResource<{ roles: { id: number; name: string }[] }>(
     "roles",
     {},
-    { enabled: editing && canManageRoles },
+    { enabled: canManageRoles },
   )
 
   // In edit mode, load the existing user and prefill the form.
@@ -115,9 +115,10 @@ export default function UserFormPage() {
     e.preventDefault()
     setErrors({})
     try {
-      await mutation.mutateAsync(form)
-      if (editing && canManageRoles && userId != null) {
-        await api.setUserRoles(userId, roleIds)
+      const saved = await mutation.mutateAsync(form)
+      if (canManageRoles) {
+        const targetId = userId ?? saved.id
+        if (targetId != null) await api.setUserRoles(targetId, roleIds)
       }
       navigate("/users")
     } catch (err) {
@@ -291,7 +292,7 @@ export default function UserFormPage() {
           </div>
         </FormSection>
 
-        {editing && canManageRoles && (
+        {canManageRoles && (
           <FormSection title="Roles" icon={ShieldCheck}>
             <p className="text-xs text-muted-foreground">
               Roles grant this user the permissions needed for their tasks.

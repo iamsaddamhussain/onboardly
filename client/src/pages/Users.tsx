@@ -99,6 +99,7 @@ export default function UsersPage() {
         emptyIcon={Users}
         countNoun="user"
         stickyHeader
+        fullPageLoading
       />
     </Page>
   )

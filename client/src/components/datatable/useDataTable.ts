@@ -87,6 +87,7 @@ export function useDataTable<Row>(options: UseDataTableOptions) {
     sortDir,
     toggleSort,
     isFetching: query.isFetching,
+    isLoading: query.isLoading,
     refetch: query.refetch,
   }
 }
