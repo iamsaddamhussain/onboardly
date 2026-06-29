@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Onboardly.Server.Authorization;
 using Onboardly.Server.Dtos;
 using Onboardly.Server.Infrastructure;
 using Onboardly.Server.Models;
@@ -9,15 +11,17 @@ using Onboardly.Server.Repositories;
 namespace Onboardly.Server.Controllers;
 
 [ApiController]
-[Authorize]
+[RequirePermission(Permissions.ManageUsers)]
 [Route("api/users")]
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _users;
+    private readonly IUserAccessService _access;
 
-    public UsersController(IUserRepository users)
+    public UsersController(IUserRepository users, IUserAccessService access)
     {
         _users = users;
+        _access = access;
     }
 
     [HttpGet]
@@ -27,12 +31,28 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public IActionResult GetById([FromRoute] User? user)
+    public async Task<IActionResult> GetById(int id)
     {
+        var user = await _users.GetByIdWithRoles(id);
         if (user is null)
             return NotFound(new { message = "User not found." });
 
         return Ok(ToDto(user));
+    }
+
+    // Assigning roles is a super-admin capability, so it additionally requires
+    // the manage_roles permission on top of the class-level manage_users.
+    [HttpPut("{id:int}/roles")]
+    [RequirePermission(Permissions.ManageRoles)]
+    public async Task<IActionResult> SetRoles(int id, [FromBody] SetRolesRequest request)
+    {
+        var user = await _users.GetByIdWithRoles(id);
+        if (user is null)
+            return NotFound(new { message = "User not found." });
+
+        await _users.SetRoles(user, request.RoleIds);
+        _access.Invalidate(id);
+        return NoContent();
     }
 
     [HttpPost]
@@ -77,7 +97,24 @@ public class UsersController : ControllerBase
         return Ok(ToDto(user));
     }
 
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (currentUserId == id)
+            return BadRequest(new { message = "You cannot delete your own account." });
+
+        var user = await _users.GetById(id);
+        if (user is null)
+            return NotFound(new { message = "User not found." });
+
+        await _users.Delete(user);
+
+        return NoContent();
+    }
+
     private static UserListItem ToDto(User user) => new(
         user.Id, user.FirstName, user.LastName, user.Email,
-        user.Mobile, user.City, user.JobTitle, user.IsActive, user.CreatedAt);
+        user.Mobile, user.City, user.JobTitle, user.IsActive, user.CreatedAt,
+        user.Roles.Select(r => r.Id).ToArray());
 }

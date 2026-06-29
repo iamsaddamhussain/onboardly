@@ -1,12 +1,14 @@
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { PermissionRoute } from "@/components/PermissionRoute"
 import { GuestRoute } from "@/components/GuestRoute"
 import { AppLayout } from "@/components/AppLayout"
 import LoginPage from "@/pages/Login"
 import DashboardPage from "@/pages/Dashboard"
 import UsersPage from "@/pages/Users"
 import NewUserPage from "@/pages/NewUser"
+import RolesPage from "@/pages/Roles"
 import ProfilePage from "@/pages/Profile"
 import SettingsPage from "@/pages/Settings"
 
@@ -29,10 +31,39 @@ export default function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/users" element={<UsersPage />} />
-        <Route path="/users/new" element={<NewUserPage />} />
-        <Route path="/users/:id/edit" element={<NewUserPage />} />
+        <Route
+          path="/users"
+          element={
+            <PermissionRoute permission="manage_users">
+              <UsersPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/users/new"
+          element={
+            <PermissionRoute permission="manage_users">
+              <NewUserPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/users/:id/edit"
+          element={
+            <PermissionRoute permission="manage_users">
+              <NewUserPage />
+            </PermissionRoute>
+          }
+        />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/roles"
+          element={
+            <PermissionRoute permission="manage_roles">
+              <RolesPage />
+            </PermissionRoute>
+          }
+        />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

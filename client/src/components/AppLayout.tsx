@@ -1,15 +1,22 @@
-import { LayoutDashboard, ListTodo, Users } from "lucide-react"
+import { LayoutDashboard, ListTodo, ShieldCheck, Users } from "lucide-react"
 import { NavLink, Outlet } from "react-router-dom"
 
 import { ProfileMenu } from "@/components/ProfileMenu"
+import { useAuthStore } from "@/store/auth-store"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/users", label: "Users", icon: Users },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null },
+  { to: "/users", label: "Users", icon: Users, permission: "manage_users" },
+  { to: "/roles", label: "Roles & Permissions", icon: ShieldCheck, permission: "manage_roles" },
 ]
 
 export function AppLayout() {
+  const hasPermission = useAuthStore((s) => s.hasPermission)
+  const visibleNav = navItems.filter(
+    (item) => item.permission == null || hasPermission(item.permission),
+  )
+
   return (
     <div className="flex min-h-screen bg-muted/40">
       <aside className="flex w-72 flex-col border-r bg-background">
@@ -21,7 +28,7 @@ export function AppLayout() {
         </div>
 
         <nav className="flex flex-1 flex-col gap-2 p-4">
-          {navItems.map(({ to, label, icon: Icon }) => (
+          {visibleNav.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

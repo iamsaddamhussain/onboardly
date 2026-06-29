@@ -12,9 +12,15 @@ public interface IUserRepository
 
     Task<User?> GetById(int id);
 
+    Task<User?> GetByIdWithRoles(int id);
+
+    Task SetRoles(User user, int[] roleIds);
+
     Task<User> Create(SaveUserRequest request);
 
     Task Update(User user, SaveUserRequest request);
+
+    Task Delete(User user);
 
     // Used by the controller's validation to keep emails unique.
     Task<bool> EmailExistsAsync(string email, int? excludeId = null);

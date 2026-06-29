@@ -11,7 +11,8 @@ public record UserListItem(
     string? City,
     string? JobTitle,
     bool IsActive,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    int[] RoleIds
 );
 
 // One request shape for both create and update, with declarative validation

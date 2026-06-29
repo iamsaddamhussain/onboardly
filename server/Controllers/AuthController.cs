@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Onboardly.Server.Authorization;
 using Onboardly.Server.Dtos;
 using Onboardly.Server.Services;
 
@@ -13,8 +14,13 @@ namespace Onboardly.Server.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
+    private readonly IUserAccessService _access;
 
-    public AuthController(IAuthService auth) => _auth = auth;
+    public AuthController(IAuthService auth, IUserAccessService access)
+    {
+        _auth = auth;
+        _access = access;
+    }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -30,7 +36,9 @@ public class AuthController : ControllerBase
             return Conflict(new { message = "An account with that email already exists." });
 
         await SignInAsync(user.Id, user.Email);
-        return Ok(new UserResponse(user.Id, user.Email));
+        var roles = await _access.GetRolesAsync(user.Id);
+        var permissions = await _access.GetPermissionsAsync(user.Id);
+        return Ok(new UserResponse(user.Id, user.Email, roles.ToArray(), permissions.ToArray()));
     }
 
     [HttpPost("login")]
@@ -41,7 +49,9 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid email or password." });
 
         await SignInAsync(user.Id, user.Email);
-        return Ok(new UserResponse(user.Id, user.Email));
+        var roles = await _access.GetRolesAsync(user.Id);
+        var permissions = await _access.GetPermissionsAsync(user.Id);
+        return Ok(new UserResponse(user.Id, user.Email, roles.ToArray(), permissions.ToArray()));
     }
 
     [Authorize]
@@ -54,11 +64,13 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public IActionResult Me()
+    public async Task<IActionResult> Me()
     {
         var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var email = User.FindFirstValue(ClaimTypes.Email)!;
-        return Ok(new UserResponse(id, email));
+        var roles = await _access.GetRolesAsync(id);
+        var permissions = await _access.GetPermissionsAsync(id);
+        return Ok(new UserResponse(id, email, roles.ToArray(), permissions.ToArray()));
     }
 
     [Authorize]
@@ -104,6 +116,13 @@ public class AuthController : ControllerBase
             new(ClaimTypes.NameIdentifier, userId.ToString()),
             new(ClaimTypes.Email, email),
         };
+
+        // Stamp roles + permissions onto the cookie so authorization is a fast
+        // claim check (this acts as the per-user permission cache).
+        foreach (var role in await _access.GetRolesAsync(userId))
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        foreach (var permission in await _access.GetPermissionsAsync(userId))
+            claims.Add(new Claim(AppClaims.Permission, permission));
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(

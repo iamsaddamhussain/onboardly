@@ -31,6 +31,8 @@ export class ApiError extends Error {
 export interface User {
   id: number
   email: string
+  roles: string[]
+  permissions: string[]
 }
 
 export interface Profile {
@@ -63,6 +65,7 @@ export interface ManagedUser {
   jobTitle: string | null
   isActive: boolean
   createdAt: string
+  roleIds: number[]
 }
 
 export interface CreateUserInput {
@@ -240,4 +243,15 @@ export const api = {
 
   updateProfile: (data: UpdateProfileInput) =>
     http.put<Profile>("/api/auth/profile", data).then((r) => r.data),
+
+  // --- Roles & permissions ---
+  createRole: (name: string) =>
+    http.post("/api/roles", { name }).then((r) => r.data),
+  deleteRole: (id: number) => http.delete(`/api/roles/${id}`).then(() => undefined),
+  setRolePermissions: (id: number, permissionIds: number[]) =>
+    http.put(`/api/roles/${id}/permissions`, { permissionIds }).then(() => undefined),
+  createPermission: (name: string) =>
+    http.post("/api/permissions", { name }).then((r) => r.data),
+  setUserRoles: (userId: number, roleIds: number[]) =>
+    http.put(`/api/users/${userId}/roles`, { roleIds }).then(() => undefined),
 }

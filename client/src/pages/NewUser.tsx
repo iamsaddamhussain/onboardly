@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, IdCard, Settings2, UserPen, UserPlus } from "lucide-react"
+import { ArrowLeft, IdCard, Settings2, ShieldCheck, Trash2, UserPen, UserPlus } from "lucide-react"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useResource, useResourceMutation } from "@/lib/query"
-import { save } from "@/lib/resource"
-import { ApiError, type ManagedUser } from "@/lib/api"
+import { save, destroy } from "@/lib/resource"
+import { ApiError, api, type ManagedUser } from "@/lib/api"
+import { useAuthStore } from "@/store/auth-store"
 
 const empty = {
   firstName: "",
@@ -31,11 +32,24 @@ export default function UserFormPage() {
   const { id } = useParams()
   const editing = id != null
   const userId = id ? Number(id) : null
+  const currentUserId = useAuthStore((s) => s.user?.id)
+  // Users cannot delete their own account (enforced on the server too).
+  const canDelete = editing && userId != null && userId !== currentUserId
+  const canManageRoles = useAuthStore((s) => s.hasPermission("manage_roles"))
 
   const [form, setForm] = useState<UserFormState>(empty)
   const [dirty, setDirty] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [roleIds, setRoleIds] = useState<number[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Roles list, only needed when this admin can assign roles.
+  const { data: rolesData } = useResource<{ roles: { id: number; name: string }[] }>(
+    "roles",
+    {},
+    { enabled: editing && canManageRoles },
+  )
 
   // In edit mode, load the existing user and prefill the form.
   const { data: existing, isLoading } = useResource<ManagedUser>(
@@ -56,6 +70,7 @@ export default function UserFormPage() {
       jobTitle: existing.jobTitle ?? "",
       isActive: existing.isActive,
     })
+    setRoleIds(existing.roleIds ?? [])
     setDirty(false)
   }, [existing])
 
@@ -78,6 +93,12 @@ export default function UserFormPage() {
   )
   const saving = mutation.isPending
 
+  // Delete only applies in edit mode; refreshes the list + dashboard.
+  const deleteMutation = useResourceMutation<void, number>(
+    (uid) => destroy("users", uid),
+    ["users", "dashboard/stats"],
+  )
+
   function update<K extends keyof UserFormState>(key: K, value: UserFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
     setDirty(true)
@@ -95,6 +116,9 @@ export default function UserFormPage() {
     setErrors({})
     try {
       await mutation.mutateAsync(form)
+      if (editing && canManageRoles && userId != null) {
+        await api.setUserRoles(userId, roleIds)
+      }
       navigate("/users")
     } catch (err) {
       // Surface server-side validation errors next to their fields.
@@ -112,6 +136,13 @@ export default function UserFormPage() {
   function requestLeave() {
     if (dirty) setConfirmOpen(true)
     else navigate("/users")
+  }
+
+  async function handleDelete() {
+    if (userId == null) return
+    await deleteMutation.mutateAsync(userId)
+    setDeleteOpen(false)
+    navigate("/users")
   }
 
   return (
@@ -260,6 +291,31 @@ export default function UserFormPage() {
           </div>
         </FormSection>
 
+        {editing && canManageRoles && (
+          <FormSection title="Roles" icon={ShieldCheck}>
+            <p className="text-xs text-muted-foreground">
+              Roles grant this user the permissions needed for their tasks.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {rolesData?.roles.map((role) => (
+                <label key={role.id} className="flex items-center gap-2 text-sm">
+                  <Switch
+                    checked={roleIds.includes(role.id)}
+                    onCheckedChange={(checked) =>
+                      setRoleIds((prev) =>
+                        checked
+                          ? [...prev, role.id]
+                          : prev.filter((r) => r !== role.id),
+                      )
+                    }
+                  />
+                  {role.name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                </label>
+              ))}
+            </div>
+          </FormSection>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button
             type="button"
@@ -269,6 +325,16 @@ export default function UserFormPage() {
           >
             Cancel
           </Button>
+          {canDelete && (
+            <Button
+              type="button"
+              variant="destructive"
+              className="rounded-none"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 /> Delete
+            </Button>
+          )}
           <Button type="submit" className="rounded-none" disabled={saving}>
             {saving
               ? editing
@@ -293,6 +359,17 @@ export default function UserFormPage() {
           navigate("/users")
         }}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete User?"
+        description="This permanently removes this user. This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
       />
     </Page>
   )

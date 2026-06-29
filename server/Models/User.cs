@@ -12,4 +12,6 @@ public class User : IEntity
     public string? JobTitle { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public ICollection<Role> Roles { get; set; } = new List<Role>();
 }

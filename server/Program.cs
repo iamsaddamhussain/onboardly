@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Onboardly.Server.Authorization;
 using Onboardly.Server.Data;
 using Onboardly.Server.Infrastructure;
 using Onboardly.Server.Models;
@@ -18,6 +20,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserAccessService, UserAccessService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
 
 // --- Cookie-based authentication (stateful sessions, HTTP-only cookie) ---
 builder.Services
@@ -45,6 +50,8 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddControllers(options =>
 {
     // Enable Laravel-style route-model binding for IEntity parameters.

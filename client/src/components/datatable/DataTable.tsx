@@ -1,5 +1,5 @@
-import { type ReactNode } from "react"
-import { ArrowDown, ArrowUp, ChevronsUpDown, Search } from "lucide-react"
+import { type ComponentType, type ReactNode } from "react"
+import { ArrowDown, ArrowUp, ChevronsUpDown, Inbox, Search } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,8 @@ export interface DataTableProps<Row> {
   emptyMessage?: string
   /** Noun for the count label, e.g. "user" -> "Showing 1–10 of 42". */
   countNoun?: string
+  /** Icon shown in the empty state. */
+  emptyIcon?: ComponentType<{ className?: string }>
   /** Extra controls rendered next to the search box. */
   toolbar?: ReactNode
   /** Content rendered between the toolbar and the table (e.g. applied filters). */
@@ -53,6 +55,7 @@ export function DataTable<Row>({
   onRowClick,
   emptyMessage = "No records found.",
   countNoun = "record",
+  emptyIcon: EmptyIcon = Inbox,
   toolbar,
   beforeTable,
 }: DataTableProps<Row>) {
@@ -145,11 +148,10 @@ export function DataTable<Row>({
                 </tr>
               ) : table.rows.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={colCount}
-                    className="px-4 py-8 text-center text-muted-foreground"
-                  >
-                    {emptyMessage}
+                  <td colSpan={colCount} className="px-4 py-16">
+                    <div className="flex flex-col items-center gap-3 text-muted-foreground" aria-label={emptyMessage}>
+                      <EmptyIcon className="size-12 opacity-40" />
+                    </div>
                   </td>
                 </tr>
               ) : (

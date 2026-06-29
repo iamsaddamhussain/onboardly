@@ -6,7 +6,7 @@ public record RegisterRequest(string Email, string Password);
 
 public record LoginRequest(string Email, string Password);
 
-public record UserResponse(int Id, string Email);
+public record UserResponse(int Id, string Email, string[] Roles, string[] Permissions);
 
 public record ProfileResponse(
     int Id,

@@ -45,10 +45,23 @@ public class UserRepository : IUserRepository
             .DefaultSort(q => q.OrderByDescending(u => u.CreatedAt))
             .ToPagedResultAsync(u => new UserListItem(
                 u.Id, u.FirstName, u.LastName, u.Email,
-                u.Mobile, u.City, u.JobTitle, u.IsActive, u.CreatedAt));
+                u.Mobile, u.City, u.JobTitle, u.IsActive, u.CreatedAt,
+                u.Roles.Select(r => r.Id).ToArray()));
 
     public Task<User?> GetById(int id) =>
         _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+    public Task<User?> GetByIdWithRoles(int id) =>
+        _db.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
+
+    public async Task SetRoles(User user, int[] roleIds)
+    {
+        var roles = await _db.Roles.Where(r => roleIds.Contains(r.Id)).ToListAsync();
+        user.Roles.Clear();
+        foreach (var role in roles)
+            user.Roles.Add(role);
+        await _db.SaveChangesAsync();
+    }
 
     public async Task<User> Create(SaveUserRequest request)
     {
@@ -71,6 +84,12 @@ public class UserRepository : IUserRepository
         if (!string.IsNullOrEmpty(request.Password))
             user.PasswordHash = _hasher.HashPassword(user, request.Password);
 
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task Delete(User user)
+    {
+        _db.Users.Remove(user);
         await _db.SaveChangesAsync();
     }
 

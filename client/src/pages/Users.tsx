@@ -96,6 +96,7 @@ export default function UsersPage() {
         pageSizeOptions={[10, 25, 50, 100]}
         searchPlaceholder="Search users…"
         emptyMessage="No users found."
+        emptyIcon={Users}
         countNoun="user"
         stickyHeader
       />

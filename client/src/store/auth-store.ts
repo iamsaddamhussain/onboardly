@@ -14,9 +14,12 @@ interface AuthState {
   logout: () => Promise<void>
   // Called by the api client's 401 handler to clear the session locally.
   sessionExpired: () => void
+  // Permission/role helpers — drive UI visibility off the user's permissions.
+  hasPermission: (permission: string) => boolean
+  hasRole: (role: string) => boolean
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   initialized: false,
   fetchCurrentUser: async () => {
@@ -38,4 +41,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null })
   },
   sessionExpired: () => set({ user: null }),
+  hasPermission: (permission) =>
+    get().user?.permissions.includes(permission) ?? false,
+  hasRole: (role) => get().user?.roles.includes(role) ?? false,
 }))
