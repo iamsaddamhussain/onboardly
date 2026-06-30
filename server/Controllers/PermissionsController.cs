@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Onboardly.Server.Authorization;
-using Onboardly.Server.Data;
 using Onboardly.Server.Dtos;
-using Onboardly.Server.Models;
+using Onboardly.Server.Repositories;
 
 namespace Onboardly.Server.Controllers;
 
@@ -12,30 +10,24 @@ namespace Onboardly.Server.Controllers;
 [Route("api/permissions")]
 public class PermissionsController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IPermissionRepository _permissions;
 
-    public PermissionsController(AppDbContext db) => _db = db;
+    public PermissionsController(IPermissionRepository permissions) => _permissions = permissions;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await _db.Permissions
-            .Select(p => new { p.Id, p.Name })
-            .OrderBy(p => p.Name)
-            .ToListAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _permissions.GetAll());
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePermissionRequest request)
     {
         var name = request.Name.Trim();
-        if (await _db.Permissions.AnyAsync(p => p.Name == name))
+        if (await _permissions.NameExistsAsync(name))
         {
             ModelState.AddModelError(nameof(request.Name), "A permission with that name already exists.");
             return ValidationProblem(ModelState);
         }
 
-        var permission = new Permission { Name = name };
-        _db.Permissions.Add(permission);
-        await _db.SaveChangesAsync();
+        var permission = await _permissions.Create(request);
         return Created($"/api/permissions/{permission.Id}", new { permission.Id, permission.Name });
     }
 }

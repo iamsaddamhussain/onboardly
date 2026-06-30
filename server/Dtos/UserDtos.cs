@@ -15,10 +15,9 @@ public record UserListItem(
     int[] RoleIds
 );
 
-// One request shape for both create and update, with declarative validation
-// (the .NET equivalent of a Laravel FormRequest). Password is optional here:
-// it's required on create (enforced in the controller) and left blank on
-// update to keep the existing password.
+// One request shape for both create and update, with declarative validation.
+// Password is optional here: it's required on create (enforced in the
+// controller) and left blank on update to keep the existing password.
 public record SaveUserRequest(
     [Required(ErrorMessage = "First name is required.")]
     [MaxLength(100)]

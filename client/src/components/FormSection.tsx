@@ -21,19 +21,13 @@ interface FormSectionProps {
   defaultCollapsed?: boolean
   /** Remove horizontal padding on the content container. */
   edgeToEdge?: boolean
-  /** Extra controls rendered on the right of the header. (= Vue #heading-content) */
+  /** Extra controls rendered on the right of the header. */
   headingContent?: ReactNode
-  /** Section body. (= Vue default <slot />) */
+  /** Section body. */
   children: ReactNode
   className?: string
 }
 
-// Reusable collapsible card wrapper — the React equivalent of the Vue
-// `FormSection.vue`. Usage:
-//
-//   <FormSection title="Client" icon={Briefcase}>
-//     <CompareSection ... />
-//   </FormSection>
 export function FormSection({
   id,
   title,

@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Onboardly.Server.Authorization;
-using Onboardly.Server.Data;
 using Onboardly.Server.Dtos;
 using Onboardly.Server.Models;
+using Onboardly.Server.Repositories;
 
 namespace Onboardly.Server.Controllers;
 
@@ -12,30 +11,20 @@ namespace Onboardly.Server.Controllers;
 [Route("api/roles")]
 public class RolesController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IRoleRepository _roles;
+    private readonly IPermissionRepository _permissions;
 
-    public RolesController(AppDbContext db) => _db = db;
+    public RolesController(IRoleRepository roles, IPermissionRepository permissions)
+    {
+        _roles = roles;
+        _permissions = permissions;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var roles = await _db.Roles
-            .Select(r => new
-            {
-                r.Id,
-                r.Name,
-                PermissionIds = r.Permissions.Select(p => p.Id).ToList(),
-                Permissions = r.Permissions.Select(p => p.Name).OrderBy(n => n).ToList(),
-                UserCount = r.Users.Count,
-            })
-            .OrderBy(r => r.Name)
-            .ToListAsync();
-
-        var permissions = await _db.Permissions
-            .Select(p => new { p.Id, p.Name })
-            .OrderBy(p => p.Name)
-            .ToListAsync();
-
+        var roles = await _roles.GetAll();
+        var permissions = await _permissions.GetAll();
         return Ok(new { roles, permissions });
     }
 
@@ -43,49 +32,37 @@ public class RolesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateRoleRequest request)
     {
         var name = request.Name.Trim();
-        if (await _db.Roles.AnyAsync(r => r.Name == name))
+        if (await _roles.NameExistsAsync(name))
         {
             ModelState.AddModelError(nameof(request.Name), "A role with that name already exists.");
             return ValidationProblem(ModelState);
         }
 
-        var role = new Role { Name = name };
-        _db.Roles.Add(role);
-        await _db.SaveChangesAsync();
+        var role = await _roles.Create(request);
         return Created($"/api/roles/{role.Id}", new { role.Id, role.Name });
     }
 
     [HttpPut("{id:int}/permissions")]
     public async Task<IActionResult> SetPermissions(int id, [FromBody] SetPermissionsRequest request)
     {
-        var role = await _db.Roles.Include(r => r.Permissions).FirstOrDefaultAsync(r => r.Id == id);
+        var role = await _roles.GetByIdWithPermissions(id);
         if (role is null)
             return NotFound(new { message = "Role not found." });
 
-        var permissions = await _db.Permissions
-            .Where(p => request.PermissionIds.Contains(p.Id))
-            .ToListAsync();
-
-        role.Permissions.Clear();
-        foreach (var permission in permissions)
-            role.Permissions.Add(permission);
-
-        await _db.SaveChangesAsync();
+        await _roles.SetPermissions(role, request.PermissionIds);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete([FromRoute] Role? role)
     {
-        var role = await _db.Roles.FirstOrDefaultAsync(r => r.Id == id);
         if (role is null)
             return NotFound(new { message = "Role not found." });
 
         if (role.Name == Authorization.Roles.SuperAdmin)
             return BadRequest(new { message = "The super admin role cannot be deleted." });
 
-        _db.Roles.Remove(role);
-        await _db.SaveChangesAsync();
+        await _roles.Delete(role);
         return NoContent();
     }
 }

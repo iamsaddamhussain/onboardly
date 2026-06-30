@@ -97,7 +97,7 @@ public class UserRepository : IUserRepository
         _db.Users.AnyAsync(u => u.Email == email && (excludeId == null || u.Id != excludeId));
 
     // Copy the request's editable fields onto a User entity (shared by create
-    // and update) — the rough equivalent of Laravel's fillable mass-assignment.
+    // and update).
     private static void ApplyRequest(User user, SaveUserRequest request)
     {
         user.FirstName = request.FirstName.Trim();

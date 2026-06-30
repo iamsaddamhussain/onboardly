@@ -78,9 +78,8 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] SaveUserRequest request)
+    public async Task<IActionResult> Update([FromRoute] User? user, [FromBody] SaveUserRequest request)
     {
-        var user = await _users.GetById(id);
         if (user is null)
             return NotFound(new { message = "User not found." });
 
@@ -98,15 +97,14 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete([FromRoute] User? user)
     {
-        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        if (currentUserId == id)
-            return BadRequest(new { message = "You cannot delete your own account." });
-
-        var user = await _users.GetById(id);
         if (user is null)
             return NotFound(new { message = "User not found." });
+
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (currentUserId == user.Id)
+            return BadRequest(new { message = "You cannot delete your own account." });
 
         await _users.Delete(user);
 

@@ -20,6 +20,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IUserAccessService, UserAccessService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
@@ -54,7 +57,7 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProv
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddControllers(options =>
 {
-    // Enable Laravel-style route-model binding for IEntity parameters.
+    // Enable route-model binding for IEntity parameters.
     options.ModelBinderProviders.Insert(0, new EntityModelBinderProvider());
 });
 

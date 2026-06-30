@@ -2,9 +2,8 @@ import type { ReactNode } from "react"
 
 export type ColumnAlign = "left" | "center" | "right"
 
-// A fluent, chainable column definition — the React equivalent of the Vue
-// `datatableColumnBuilder`. Holds only data + callbacks (no JSX), so it can
-// live in a plain .ts module and be reused across the whole project.
+// A fluent, chainable column definition. Holds only data + callbacks (no JSX),
+// so it can live in a plain .ts module and be reused across the whole project.
 export class Column<Row = Record<string, unknown>> {
   field: string
   label: string

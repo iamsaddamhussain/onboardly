@@ -6,8 +6,7 @@ namespace Onboardly.Server.Infrastructure;
 
 // Query parameters every datatable endpoint accepts. Binds straight from the
 // query string (?search=&sortBy=&sortDir=&page=&pageSize=), so a controller
-// action can take `[FromQuery] DataTableRequest request` — the rough .NET
-// equivalent of Laravel's UserListingRequest / DatatableRequest trait.
+// action can take `[FromQuery] DataTableRequest request`.
 public record DataTableRequest(
     string? Search = null,
     string? SortBy = null,
@@ -19,9 +18,8 @@ public record DataTableRequest(
 }
 
 // Fluent helper that turns an IQueryable into a paged, searched and sorted
-// result for our SPA datatable — the .NET counterpart of the Laravel
-// DatatableBuilder. Configure searchable columns and named sorts, then call
-// ToPagedResultAsync with a projection to the row DTO.
+// result for our SPA datatable. Configure searchable columns and named sorts,
+// then call ToPagedResultAsync with a projection to the row DTO.
 public class DataTableBuilder<T>
 {
     private readonly IQueryable<T> _query;
