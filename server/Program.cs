@@ -59,11 +59,15 @@ builder.Services.AddControllers(options =>
 });
 
 // --- CORS for the Vite dev server (credentials required for cookies) ---
+// Origins come from configuration ("Cors:DevOrigins") so the dev port lives in
+// one place; falls back to the default Vite port if nothing is configured.
 const string DevCorsPolicy = "DevClient";
+var devOrigins = builder.Configuration.GetSection("Cors:DevOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:5174", "https://localhost:5174" };
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(DevCorsPolicy, policy =>
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+        policy.WithOrigins(devOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -83,8 +87,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCors(DevCorsPolicy);
 }
-
-app.UseHttpsRedirection();
+else
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
