@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react"
 import { LayoutDashboard, UserCheck, UserPlus, Users, UserX } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { useResource } from "@/lib/query"
 import { type DashboardStats } from "@/lib/api"
 
 const cards = [
-  { key: "totalUsers", label: "Total Users", icon: Users, desc: "Everyone in your workspace" },
-  { key: "activeUsers", label: "Active Users", icon: UserCheck, desc: "Able to sign in right now" },
-  { key: "inactiveUsers", label: "Inactive Users", icon: UserX, desc: "Suspended or disabled" },
-  { key: "newThisMonth", label: "New This Month", icon: UserPlus, desc: "Joined in the last 30 days" },
+  { key: "totalUsers", icon: Users },
+  { key: "activeUsers", icon: UserCheck },
+  { key: "inactiveUsers", icon: UserX },
+  { key: "newThisMonth", icon: UserPlus },
 ] as const
 
 // Animate from 0 up to the target whenever the target changes.
@@ -39,6 +40,7 @@ function StatValue({ value }: { value: number }) {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   // Errors (including 401 -> redirect) are handled globally by the axios
   // interceptor, so the page only deals with the happy path.
   const { data, isLoading } = useResource<DashboardStats>("dashboard/stats")
@@ -46,13 +48,13 @@ export default function DashboardPage() {
 
   return (
     <Page
-      title="Dashboard"
+      title={t("dashboard.title")}
       icon={LayoutDashboard}
-      description="An overview of your user base."
+      description={t("dashboard.description")}
       loading={loading}
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map(({ key, label, icon: Icon, desc }) => (
+        {cards.map(({ key, icon: Icon }) => (
           <div
             key={key}
             className="flex items-center gap-4 rounded-none border bg-background p-5"
@@ -60,8 +62,8 @@ export default function DashboardPage() {
             <Icon className="size-9 shrink-0 text-muted-foreground" />
             <div className="flex flex-1 flex-col text-right">
               <StatValue value={data?.[key] ?? 0} />
-              <span className="mt-1.5 text-sm font-semibold">{label}</span>
-              <span className="text-xs text-muted-foreground">{desc}</span>
+              <span className="mt-1.5 text-sm font-semibold">{t(`dashboard.${key}`)}</span>
+              <span className="text-xs text-muted-foreground">{t(`dashboard.${key}Desc`)}</span>
             </div>
           </div>
         ))}

@@ -45,7 +45,7 @@ public class UserRepository : IUserRepository
             .DefaultSort(q => q.OrderByDescending(u => u.CreatedAt))
             .ToPagedResultAsync(u => new UserListItem(
                 u.Id, u.FirstName, u.LastName, u.Email,
-                u.Mobile, u.City, u.JobTitle, u.IsActive, u.CreatedAt,
+                u.Mobile, u.City, u.JobTitle, u.Language, u.IsActive, u.CreatedAt,
                 u.Roles.Select(r => r.Id).ToArray()));
 
     public Task<User?> GetById(int id) =>
@@ -106,6 +106,7 @@ public class UserRepository : IUserRepository
         user.Mobile = request.Mobile?.Trim();
         user.City = request.City?.Trim();
         user.JobTitle = request.JobTitle?.Trim();
+        user.Language = string.IsNullOrWhiteSpace(request.Language) ? "en" : request.Language;
         user.IsActive = request.IsActive;
     }
 }

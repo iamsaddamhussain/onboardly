@@ -1,6 +1,7 @@
 import { create } from "zustand"
 
 import { api, type User } from "@/lib/api"
+import { setLanguage as applyLanguage, type Language } from "@/lib/i18n"
 
 interface AuthState {
   user: User | null
@@ -12,6 +13,8 @@ interface AuthState {
   fetchCurrentUser: () => Promise<void>
   login: (email: string, password: string) => Promise<User>
   logout: () => Promise<void>
+  // Persist the signed-in user's UI language to the server and apply it locally.
+  setLanguage: (language: Language) => Promise<void>
   // Called by the api client's 401 handler to clear the session locally.
   sessionExpired: () => void
   // Permission/role helpers — drive UI visibility off the user's permissions.
@@ -24,7 +27,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
   fetchCurrentUser: async () => {
     try {
-      set({ user: await api.me() })
+      const user = await api.me()
+      applyLanguage(user.language as Language)
+      set({ user })
     } catch {
       set({ user: null })
     } finally {
@@ -33,12 +38,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   login: async (email, password) => {
     const user = await api.login(email, password)
+    applyLanguage(user.language as Language)
     set({ user })
     return user
   },
   logout: async () => {
     await api.logout()
     set({ user: null })
+  },
+  setLanguage: async (language) => {
+    await api.setLanguage(language)
+    applyLanguage(language)
+    const user = get().user
+    if (user) set({ user: { ...user, language } })
   },
   sessionExpired: () => set({ user: null }),
   hasPermission: (permission) =>

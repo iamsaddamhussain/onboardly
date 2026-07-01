@@ -9,4 +9,5 @@ public interface IAuthService
     Task<User?> ValidateCredentialsAsync(string email, string password);
     Task<User?> GetByIdAsync(int id);
     Task UpdateProfileAsync(User user, UpdateProfileRequest request);
+    Task UpdateLanguageAsync(User user, string language);
 }

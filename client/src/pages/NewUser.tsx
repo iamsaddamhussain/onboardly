@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowLeft, IdCard, Settings2, ShieldCheck, Trash2, UserPen, UserPlus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
@@ -13,6 +14,7 @@ import { useResource, useResourceMutation } from "@/lib/query"
 import { save, destroy } from "@/lib/resource"
 import { ApiError, api, type ManagedUser } from "@/lib/api"
 import { useAuthStore } from "@/store/auth-store"
+import { SUPPORTED_LANGUAGES } from "@/lib/i18n"
 
 const empty = {
   firstName: "",
@@ -22,6 +24,7 @@ const empty = {
   mobile: "",
   city: "",
   jobTitle: "",
+  language: "en",
   isActive: true,
 }
 
@@ -29,6 +32,7 @@ type UserFormState = typeof empty
 
 export default function UserFormPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { id } = useParams()
   const editing = id != null
   const userId = id ? Number(id) : null
@@ -68,6 +72,7 @@ export default function UserFormPage() {
       mobile: existing.mobile ?? "",
       city: existing.city ?? "",
       jobTitle: existing.jobTitle ?? "",
+      language: existing.language,
       isActive: existing.isActive,
     })
     setRoleIds(existing.roleIds ?? [])
@@ -87,6 +92,7 @@ export default function UserFormPage() {
         mobile: data.mobile.trim() || undefined,
         city: data.city.trim() || undefined,
         jobTitle: data.jobTitle.trim() || undefined,
+        language: data.language,
         isActive: data.isActive,
       }),
     ["users", "dashboard/stats"],
@@ -148,17 +154,17 @@ export default function UserFormPage() {
 
   return (
     <Page
-      title={editing ? "Edit User" : "New User"}
+      title={editing ? t("userForm.editTitle") : t("userForm.newTitle")}
       icon={editing ? UserPen : UserPlus}
       description={
         editing
-          ? "Update this person's details."
-          : "Add a new person to your workspace."
+          ? t("userForm.editDescription")
+          : t("userForm.newDescription")
       }
       breadcrumbs={[
-        { label: "Dashboard", to: "/dashboard" },
-        { label: "Users", to: "/users" },
-        { label: editing ? "Edit User" : "New User" },
+        { label: t("nav.dashboard"), to: "/dashboard" },
+        { label: t("nav.users"), to: "/users" },
+        { label: editing ? t("userForm.editTitle") : t("userForm.newTitle") },
       ]}
       loading={editing && isLoading}
       actions={
@@ -167,15 +173,15 @@ export default function UserFormPage() {
           className="rounded-none"
           onClick={requestLeave}
         >
-          <ArrowLeft /> Back
+          <ArrowLeft /> {t("common.back")}
         </Button>
       }
     >
       <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-4">
-        <FormSection title="Basic Details" icon={IdCard}>
+        <FormSection title={t("userForm.basicDetails")} icon={IdCard}>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="firstName">First name</Label>
+              <Label htmlFor="firstName">{t("userForm.firstName")}</Label>
               <Input
                 id="firstName"
                 className="rounded-none"
@@ -188,7 +194,7 @@ export default function UserFormPage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="lastName">Last name</Label>
+              <Label htmlFor="lastName">{t("userForm.lastName")}</Label>
               <Input
                 id="lastName"
                 className="rounded-none"
@@ -203,7 +209,7 @@ export default function UserFormPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("userForm.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -218,7 +224,7 @@ export default function UserFormPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("userForm.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -232,15 +238,15 @@ export default function UserFormPage() {
             ) : (
               <p className="text-xs text-muted-foreground">
                 {editing
-                  ? "Leave blank to keep the current password."
-                  : "Must be at least 8 characters."}
+                  ? t("userForm.passwordHintEdit")
+                  : t("userForm.passwordHintNew")}
               </p>
             )}
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="mobile">Mobile</Label>
+              <Label htmlFor="mobile">{t("userForm.mobile")}</Label>
               <Input
                 id="mobile"
                 className="rounded-none"
@@ -253,7 +259,7 @@ export default function UserFormPage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">{t("userForm.city")}</Label>
               <Input
                 id="city"
                 className="rounded-none"
@@ -268,7 +274,7 @@ export default function UserFormPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="jobTitle">Job title</Label>
+            <Label htmlFor="jobTitle">{t("userForm.jobTitle")}</Label>
             <Input
               id="jobTitle"
               className="rounded-none"
@@ -282,12 +288,27 @@ export default function UserFormPage() {
           </div>
         </FormSection>
 
-        <FormSection title="Account" icon={Settings2}>
+        <FormSection title={t("userForm.account")} icon={Settings2}>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="language">{t("userForm.language")}</Label>
+            <select
+              id="language"
+              className="rounded-none border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              value={form.language}
+              onChange={(e) => update("language", e.target.value)}
+            >
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>
+                  {t(`languages.${lang}`)}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Account active</p>
+              <p className="text-sm font-medium">{t("userForm.accountActive")}</p>
               <p className="text-xs text-muted-foreground">
-                Inactive users can't sign in.
+                {t("userForm.accountActiveHint")}
               </p>
             </div>
             <Switch
@@ -298,9 +319,9 @@ export default function UserFormPage() {
         </FormSection>
 
         {canManageRoles && (
-          <FormSection title="Roles" icon={ShieldCheck}>
+          <FormSection title={t("userForm.roles")} icon={ShieldCheck}>
             <p className="text-xs text-muted-foreground">
-              Roles grant this user the permissions needed for their tasks.
+              {t("userForm.rolesHint")}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {rolesData?.roles.map((role) => (
@@ -329,7 +350,7 @@ export default function UserFormPage() {
             className="rounded-none"
             onClick={requestLeave}
           >
-            Cancel
+            {t("userForm.cancel")}
           </Button>
           {canDelete && (
             <Button
@@ -338,27 +359,27 @@ export default function UserFormPage() {
               className="rounded-none"
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 /> Delete
+              <Trash2 /> {t("userForm.delete")}
             </Button>
           )}
           <Button type="submit" className="rounded-none" disabled={saving}>
             {saving
               ? editing
-                ? "Saving…"
-                : "Creating…"
+                ? t("userForm.saving")
+                : t("userForm.creating")
               : editing
-                ? "Save Changes"
-                : "Create User"}
+                ? t("userForm.saveChanges")
+                : t("userForm.createUser")}
           </Button>
         </div>
       </form>
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Discard Changes?"
-        description="You have unsaved changes, are you sure you want to discard them?"
-        confirmLabel="Discard Changes"
-        cancelLabel="Cancel"
+        title={t("userForm.discardTitle")}
+        description={t("userForm.discardDescription")}
+        confirmLabel={t("userForm.discardConfirm")}
+        cancelLabel={t("userForm.cancel")}
         destructive
         onConfirm={() => {
           setConfirmOpen(false)
@@ -369,10 +390,10 @@ export default function UserFormPage() {
 
       <ConfirmDialog
         open={deleteOpen}
-        title="Delete User?"
-        description="This permanently removes this user. This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title={t("userForm.deleteTitle")}
+        description={t("userForm.deleteDescription")}
+        confirmLabel={t("userForm.delete")}
+        cancelLabel={t("userForm.cancel")}
         destructive
         onConfirm={handleDelete}
         onCancel={() => setDeleteOpen(false)}

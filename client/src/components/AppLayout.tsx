@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react"
 import { LayoutDashboard, ListTodo, Menu, ShieldCheck, Users, X } from "lucide-react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { ProfileMenu } from "@/components/ProfileMenu"
 import { useAuthStore } from "@/store/auth-store"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null },
-  { to: "/users", label: "Users", icon: Users, permission: "manage_users" },
-  { to: "/roles", label: "Roles & Permissions", icon: ShieldCheck, permission: "manage_roles" },
+  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, permission: null },
+  { to: "/users", labelKey: "nav.users", icon: Users, permission: "manage_users" },
+  { to: "/roles", labelKey: "nav.roles", icon: ShieldCheck, permission: "manage_roles" },
 ]
 
 export function AppLayout() {
+  const { t } = useTranslation()
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const [open, setOpen] = useState(false)
   const location = useLocation()
@@ -44,19 +46,19 @@ export function AppLayout() {
           <div className="flex size-9 items-center justify-center rounded-none bg-primary text-primary-foreground">
             <ListTodo className="size-5" />
           </div>
-          <span className="text-lg font-semibold">Onboardly</span>
+          <span className="text-lg font-semibold">{t("common.appName")}</span>
           <button
             type="button"
             className="ml-auto md:hidden"
             onClick={() => setOpen(false)}
-            aria-label="Close menu"
+            aria-label={t("nav.closeMenu")}
           >
             <X className="size-5" />
           </button>
         </div>
 
         <nav className="flex flex-1 flex-col gap-2 p-4">
-          {visibleNav.map(({ to, label, icon: Icon }) => (
+          {visibleNav.map(({ to, labelKey, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -70,7 +72,7 @@ export function AppLayout() {
               }
             >
               <Icon className="size-5" />
-              {label}
+              {t(labelKey)}
             </NavLink>
           ))}
         </nav>
@@ -82,7 +84,7 @@ export function AppLayout() {
             type="button"
             className="md:hidden"
             onClick={() => setOpen(true)}
-            aria-label="Open menu"
+            aria-label={t("nav.openMenu")}
           >
             <Menu className="size-5" />
           </button>

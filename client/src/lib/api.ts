@@ -31,6 +31,7 @@ export class ApiError extends Error {
 export interface User {
   id: number
   email: string
+  language: string
   roles: string[]
   permissions: string[]
 }
@@ -43,6 +44,7 @@ export interface Profile {
   mobile: string | null
   city: string | null
   jobTitle: string | null
+  language: string
   isActive: boolean
   createdAt: string
 }
@@ -63,6 +65,7 @@ export interface ManagedUser {
   mobile: string | null
   city: string | null
   jobTitle: string | null
+  language: string
   isActive: boolean
   createdAt: string
   roleIds: number[]
@@ -76,6 +79,7 @@ export interface CreateUserInput {
   mobile?: string
   city?: string
   jobTitle?: string
+  language?: string
   isActive: boolean
 }
 
@@ -243,6 +247,9 @@ export const api = {
 
   updateProfile: (data: UpdateProfileInput) =>
     http.put<Profile>("/api/auth/profile", data).then((r) => r.data),
+
+  setLanguage: (language: string) =>
+    http.put<void>("/api/auth/language", { language }).then(() => undefined),
 
   // --- Roles & permissions ---
   createRole: (name: string) =>

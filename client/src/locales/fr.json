@@ -1,0 +1,159 @@
+{
+  "common": {
+    "appName": "Onboardly",
+    "loading": "Chargement…",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "add": "Ajouter",
+    "back": "Retour",
+    "dash": "—"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "users": "Utilisateurs",
+    "roles": "Rôles et permissions",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "profileMenu": {
+    "myProfile": "Mon profil",
+    "darkMode": "Mode sombre",
+    "language": "Langue",
+    "logout": "Déconnexion"
+  },
+  "languages": {
+    "en": "Anglais",
+    "fr": "Français"
+  },
+  "toasts": {
+    "profileUpdated": "Profil mis à jour.",
+    "languageUpdated": "Langue mise à jour.",
+    "oauthComingSoon": "La connexion avec {{provider}} arrive bientôt."
+  },
+  "table": {
+    "search": "Rechercher dans ce tableau…",
+    "loading": "Chargement…",
+    "rowsPerPage": "Lignes par page",
+    "showing": "Affichage de {{from}} à {{to}} sur {{total}}",
+    "countEmpty": "0 {{noun}}",
+    "pageOf": "Page {{page}} sur {{total}}",
+    "previousPage": "Page précédente",
+    "nextPage": "Page suivante"
+  },
+  "login": {
+    "heroTitle": "Intégrez votre équipe plus rapidement.",
+    "heroSubtitle": "Suivez les tâches, gérez votre espace de travail et gardez tout en mouvement au même endroit.",
+    "workspaceAlt": "Espace de travail moderne",
+    "title": "Connexion à Onboardly",
+    "subtitle": "Utilisez le compte de démonstration ou vos propres identifiants.",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "orContinue": "Ou continuer avec"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "description": "Un aperçu de votre base d'utilisateurs.",
+    "totalUsers": "Total des utilisateurs",
+    "totalUsersDesc": "Toutes les personnes de votre espace de travail",
+    "activeUsers": "Utilisateurs actifs",
+    "activeUsersDesc": "Capables de se connecter maintenant",
+    "inactiveUsers": "Utilisateurs inactifs",
+    "inactiveUsersDesc": "Suspendus ou désactivés",
+    "newThisMonth": "Nouveaux ce mois-ci",
+    "newThisMonthDesc": "Inscrits au cours des 30 derniers jours"
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "description": "Gérez les personnes de votre espace de travail.",
+    "newUser": "Nouvel utilisateur",
+    "search": "Rechercher des utilisateurs…",
+    "empty": "Aucun utilisateur trouvé.",
+    "noun": "utilisateur",
+    "columns": {
+      "status": "Statut",
+      "name": "Nom",
+      "email": "E-mail",
+      "city": "Ville",
+      "jobTitle": "Poste",
+      "language": "Langue",
+      "joined": "Inscrit le",
+      "mobile": "Mobile",
+      "actions": "Actions"
+    },
+    "active": "Actif",
+    "inactive": "Inactif",
+    "edit": "Modifier"
+  },
+  "userForm": {
+    "editTitle": "Modifier l'utilisateur",
+    "newTitle": "Nouvel utilisateur",
+    "editDescription": "Mettez à jour les détails de cette personne.",
+    "newDescription": "Ajoutez une nouvelle personne à votre espace de travail.",
+    "basicDetails": "Informations de base",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "passwordHintEdit": "Laissez vide pour conserver le mot de passe actuel.",
+    "passwordHintNew": "Doit comporter au moins 8 caractères.",
+    "mobile": "Mobile",
+    "city": "Ville",
+    "jobTitle": "Poste",
+    "language": "Langue",
+    "account": "Compte",
+    "accountActive": "Compte actif",
+    "accountActiveHint": "Les utilisateurs inactifs ne peuvent pas se connecter.",
+    "roles": "Rôles",
+    "rolesHint": "Les rôles accordent à cet utilisateur les permissions nécessaires à ses tâches.",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "saving": "Enregistrement…",
+    "creating": "Création…",
+    "saveChanges": "Enregistrer",
+    "createUser": "Créer l'utilisateur",
+    "discardTitle": "Abandonner les modifications ?",
+    "discardDescription": "Vous avez des modifications non enregistrées, voulez-vous vraiment les abandonner ?",
+    "discardConfirm": "Abandonner les modifications",
+    "deleteTitle": "Supprimer l'utilisateur ?",
+    "deleteDescription": "Cela supprime définitivement cet utilisateur. Cette action est irréversible."
+  },
+  "roles": {
+    "title": "Rôles et permissions",
+    "description": "Créez des rôles, définissez des permissions et choisissez ce que chaque rôle peut faire.",
+    "newRole": "Nouveau rôle",
+    "newRolePlaceholder": "ex. éditeur",
+    "newPermission": "Nouvelle permission",
+    "newPermissionPlaceholder": "ex. manage_reports",
+    "add": "Ajouter",
+    "userCount_one": "{{count}} utilisateur",
+    "userCount_other": "{{count}} utilisateurs",
+    "deleteTitle": "Supprimer le rôle ?",
+    "deleteDescription": "Supprimer le rôle « {{name}} » ? Les utilisateurs concernés perdront ses permissions."
+  },
+  "profile": {
+    "title": "Mon profil",
+    "description": "Consultez et mettez à jour vos informations personnelles.",
+    "memberSince": "Membre depuis {{date}}",
+    "basicDetails": "Informations de base",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "emailHint": "Votre e-mail sert à vous connecter et ne peut pas être modifié ici.",
+    "mobile": "Mobile",
+    "city": "Ville",
+    "jobTitle": "Poste",
+    "saving": "Enregistrement…",
+    "saveChanges": "Enregistrer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "description": "Gérez les préférences de votre espace de travail.",
+    "appearance": "Apparence",
+    "appearanceDescription": "Choisissez l'apparence d'Onboardly.",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  }
+}

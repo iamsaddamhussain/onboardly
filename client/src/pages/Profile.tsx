@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { IdCard, Mail, User as UserIcon } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
@@ -30,6 +31,7 @@ function formatDate(iso: string) {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState<ProfileFormState>(empty)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -56,7 +58,7 @@ export default function ProfilePage() {
         jobTitle: data.jobTitle.trim() || undefined,
       }),
     ["auth/profile"],
-    { onSuccess: () => toast.success("Profile updated.") },
+    { onSuccess: () => toast.success(t("toasts.profileUpdated")) },
   )
   const saving = mutation.isPending
 
@@ -91,12 +93,12 @@ export default function ProfilePage() {
 
   return (
     <Page
-      title="My Profile"
+      title={t("profile.title")}
       icon={UserIcon}
-      description="View and update your personal details."
+      description={t("profile.description")}
       breadcrumbs={[
-        { label: "Dashboard", to: "/dashboard" },
-        { label: "My Profile" },
+        { label: t("nav.dashboard"), to: "/dashboard" },
+        { label: t("profile.title") },
       ]}
       loading={isLoading}
     >
@@ -116,16 +118,16 @@ export default function ProfilePage() {
             </p>
             {profile && (
               <p className="text-xs text-muted-foreground">
-                Member since {formatDate(profile.createdAt)}
+                {t("profile.memberSince", { date: formatDate(profile.createdAt) })}
               </p>
             )}
           </div>
         </Card>
 
-        <FormSection title="Basic Details" icon={IdCard}>
+        <FormSection title={t("profile.basicDetails")} icon={IdCard}>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="firstName">First name</Label>
+              <Label htmlFor="firstName">{t("profile.firstName")}</Label>
               <Input
                 id="firstName"
                 className="rounded-none"
@@ -138,7 +140,7 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="lastName">Last name</Label>
+              <Label htmlFor="lastName">{t("profile.lastName")}</Label>
               <Input
                 id="lastName"
                 className="rounded-none"
@@ -153,7 +155,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("profile.email")}</Label>
             <Input
               id="email"
               className="rounded-none"
@@ -162,13 +164,13 @@ export default function ProfilePage() {
               readOnly
             />
             <p className="text-xs text-muted-foreground">
-              Your email is used to sign in and can't be changed here.
+              {t("profile.emailHint")}
             </p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="mobile">Mobile</Label>
+              <Label htmlFor="mobile">{t("profile.mobile")}</Label>
               <Input
                 id="mobile"
                 className="rounded-none"
@@ -181,7 +183,7 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">{t("profile.city")}</Label>
               <Input
                 id="city"
                 className="rounded-none"
@@ -196,7 +198,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="jobTitle">Job title</Label>
+            <Label htmlFor="jobTitle">{t("profile.jobTitle")}</Label>
             <Input
               id="jobTitle"
               className="rounded-none"
@@ -212,7 +214,7 @@ export default function ProfilePage() {
 
         <div className="flex justify-end">
           <Button type="submit" className="rounded-none" disabled={saving}>
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? t("profile.saving") : t("profile.saveChanges")}
           </Button>
         </div>
       </form>

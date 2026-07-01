@@ -38,7 +38,7 @@ public class AuthController : ControllerBase
         await SignInAsync(user.Id, user.Email);
         var roles = await _access.GetRolesAsync(user.Id);
         var permissions = await _access.GetPermissionsAsync(user.Id);
-        return Ok(new UserResponse(user.Id, user.Email, roles.ToArray(), permissions.ToArray()));
+        return Ok(new UserResponse(user.Id, user.Email, user.Language, roles.ToArray(), permissions.ToArray()));
     }
 
     [HttpPost("login")]
@@ -51,7 +51,7 @@ public class AuthController : ControllerBase
         await SignInAsync(user.Id, user.Email);
         var roles = await _access.GetRolesAsync(user.Id);
         var permissions = await _access.GetPermissionsAsync(user.Id);
-        return Ok(new UserResponse(user.Id, user.Email, roles.ToArray(), permissions.ToArray()));
+        return Ok(new UserResponse(user.Id, user.Email, user.Language, roles.ToArray(), permissions.ToArray()));
     }
 
     [Authorize]
@@ -68,9 +68,11 @@ public class AuthController : ControllerBase
     {
         var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var email = User.FindFirstValue(ClaimTypes.Email)!;
+        var user = await _auth.GetByIdAsync(id);
+        var language = user?.Language ?? "en";
         var roles = await _access.GetRolesAsync(id);
         var permissions = await _access.GetPermissionsAsync(id);
-        return Ok(new UserResponse(id, email, roles.ToArray(), permissions.ToArray()));
+        return Ok(new UserResponse(id, email, language, roles.ToArray(), permissions.ToArray()));
     }
 
     [Authorize]
@@ -98,6 +100,19 @@ public class AuthController : ControllerBase
         return Ok(ToProfile(user));
     }
 
+    [Authorize]
+    [HttpPut("language")]
+    public async Task<IActionResult> UpdateLanguage([FromBody] UpdateLanguageRequest request)
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _auth.GetByIdAsync(id);
+        if (user is null)
+            return NotFound(new { message = "Profile not found." });
+
+        await _auth.UpdateLanguageAsync(user, request.Language);
+        return NoContent();
+    }
+
     private static ProfileResponse ToProfile(Onboardly.Server.Models.User user) => new(
         user.Id,
         user.FirstName,
@@ -106,6 +121,7 @@ public class AuthController : ControllerBase
         user.Mobile,
         user.City,
         user.JobTitle,
+        user.Language,
         user.IsActive,
         user.CreatedAt);
 

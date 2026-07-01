@@ -6,7 +6,7 @@ public record RegisterRequest(string Email, string Password);
 
 public record LoginRequest(string Email, string Password);
 
-public record UserResponse(int Id, string Email, string[] Roles, string[] Permissions);
+public record UserResponse(int Id, string Email, string Language, string[] Roles, string[] Permissions);
 
 public record ProfileResponse(
     int Id,
@@ -16,6 +16,7 @@ public record ProfileResponse(
     string? Mobile,
     string? City,
     string? JobTitle,
+    string Language,
     bool IsActive,
     DateTime CreatedAt);
 
@@ -33,3 +34,9 @@ public record UpdateProfileRequest(
     string? City,
     [StringLength(100)]
     string? JobTitle);
+
+// Switching the current user's UI language from the profile menu.
+public record UpdateLanguageRequest(
+    [Required]
+    [RegularExpression("^(en|fr)$", ErrorMessage = "Unsupported language.")]
+    string Language);

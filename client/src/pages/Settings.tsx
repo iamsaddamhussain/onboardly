@@ -1,4 +1,5 @@
 import { Monitor, Moon, Settings as SettingsIcon, Sun } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import {
   Card,
@@ -12,33 +13,34 @@ import { cn } from "@/lib/utils"
 import { Page } from "@/components/Page"
 import { useTheme, type Theme } from "@/components/theme-provider"
 
-const options: { value: Theme; label: string; icon: typeof Sun }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
+const options: { value: Theme; icon: typeof Sun }[] = [
+  { value: "light", icon: Sun },
+  { value: "dark", icon: Moon },
+  { value: "system", icon: Monitor },
 ]
 
 export default function SettingsPage() {
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
 
   return (
     <Page
-      title="Settings"
+      title={t("settings.title")}
       icon={SettingsIcon}
-      description="Manage your workspace preferences."
+      description={t("settings.description")}
       breadcrumbs={[
-        { label: "Dashboard", to: "/dashboard" },
-        { label: "Settings" },
+        { label: t("nav.dashboard"), to: "/dashboard" },
+        { label: t("settings.title") },
       ]}
     >
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Choose how Onboardly looks to you.</CardDescription>
+          <CardTitle>{t("settings.appearance")}</CardTitle>
+          <CardDescription>{t("settings.appearanceDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
-            {options.map(({ value, label, icon: Icon }) => (
+            {options.map(({ value, icon: Icon }) => (
               <Button
                 key={value}
                 type="button"
@@ -50,7 +52,7 @@ export default function SettingsPage() {
                 )}
               >
                 <Icon className="size-5" />
-                {label}
+                {t(`settings.${value}`)}
               </Button>
             ))}
           </div>

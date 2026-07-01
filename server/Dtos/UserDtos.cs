@@ -10,6 +10,7 @@ public record UserListItem(
     string? Mobile,
     string? City,
     string? JobTitle,
+    string Language,
     bool IsActive,
     DateTime CreatedAt,
     int[] RoleIds
@@ -44,5 +45,9 @@ public record SaveUserRequest(
     [MaxLength(100)]
     string? JobTitle,
 
+    [RegularExpression("^(en|fr)$", ErrorMessage = "Unsupported language.")]
+    string? Language,
+
     bool IsActive
 );
+

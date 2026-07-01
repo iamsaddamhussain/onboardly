@@ -10,6 +10,8 @@ public class User : IEntity
     public string? Mobile { get; set; }
     public string? City { get; set; }
     public string? JobTitle { get; set; }
+    // Preferred UI language (ISO 639-1). Supported: "en" (default), "fr".
+    public string Language { get; set; } = "en";
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Mobile).HasMaxLength(40);
             entity.Property(u => u.City).HasMaxLength(120);
             entity.Property(u => u.JobTitle).HasMaxLength(120);
+            entity.Property(u => u.Language).IsRequired().HasMaxLength(5).HasDefaultValue("en");
 
             // Many-to-many: users <-> roles via the role_user pivot table.
             entity.HasMany(u => u.Roles)

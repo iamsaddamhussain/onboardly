@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Plus, ShieldCheck, Trash2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
@@ -37,6 +38,7 @@ function humanize(name: string) {
 }
 
 export default function RolesPage() {
+  const { t } = useTranslation()
   const { data, isLoading } = useResource<RolesResponse>("roles")
   const [newRole, setNewRole] = useState("")
   const [newPermission, setNewPermission] = useState("")
@@ -65,24 +67,24 @@ export default function RolesPage() {
 
   return (
     <Page
-      title="Roles & Permissions"
+      title={t("roles.title")}
       icon={ShieldCheck}
-      description="Create roles, define permissions, and choose what each role can do."
+      description={t("roles.description")}
       breadcrumbs={[
-        { label: "Dashboard", to: "/dashboard" },
-        { label: "Roles & Permissions" },
+        { label: t("nav.dashboard"), to: "/dashboard" },
+        { label: t("nav.roles") },
       ]}
       loading={isLoading}
     >
       <div className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Card className="gap-3 rounded-none p-5">
-            <Label htmlFor="newRole">New role</Label>
+            <Label htmlFor="newRole">{t("roles.newRole")}</Label>
             <div className="flex gap-2">
               <Input
                 id="newRole"
                 className="rounded-none"
-                placeholder="e.g. editor"
+                placeholder={t("roles.newRolePlaceholder")}
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
               />
@@ -93,17 +95,17 @@ export default function RolesPage() {
                   createRole.mutate(newRole.trim(), { onSuccess: () => setNewRole("") })
                 }
               >
-                <Plus /> Add
+                <Plus /> {t("roles.add")}
               </Button>
             </div>
           </Card>
           <Card className="gap-3 rounded-none p-5">
-            <Label htmlFor="newPerm">New permission</Label>
+            <Label htmlFor="newPerm">{t("roles.newPermission")}</Label>
             <div className="flex gap-2">
               <Input
                 id="newPerm"
                 className="rounded-none"
-                placeholder="e.g. manage_reports"
+                placeholder={t("roles.newPermissionPlaceholder")}
                 value={newPermission}
                 onChange={(e) => setNewPermission(e.target.value)}
               />
@@ -116,7 +118,7 @@ export default function RolesPage() {
                   })
                 }
               >
-                <Plus /> Add
+                <Plus /> {t("roles.add")}
               </Button>
             </div>
           </Card>
@@ -128,7 +130,7 @@ export default function RolesPage() {
               <div>
                 <h3 className="text-sm font-semibold">{humanize(role.name)}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {role.userCount} user{role.userCount === 1 ? "" : "s"}
+                  {t("roles.userCount", { count: role.userCount })}
                 </p>
               </div>
               {role.name !== SUPER_ADMIN && (
@@ -138,7 +140,7 @@ export default function RolesPage() {
                   className="rounded-none text-destructive"
                   onClick={() => setDeleteRole(role)}
                 >
-                  <Trash2 /> Delete
+                  <Trash2 /> {t("common.delete")}
                 </Button>
               )}
             </div>
@@ -160,10 +162,10 @@ export default function RolesPage() {
 
       <ConfirmDialog
         open={deleteRole != null}
-        title="Delete Role?"
-        description={`Remove the "${deleteRole?.name}" role? Users with it will lose its permissions.`}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title={t("roles.deleteTitle")}
+        description={t("roles.deleteDescription", { name: deleteRole?.name })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
         destructive
         onConfirm={() => {
           if (deleteRole) removeRole.mutate(deleteRole.id)

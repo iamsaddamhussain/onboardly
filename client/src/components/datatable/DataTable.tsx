@@ -1,5 +1,6 @@
 import { type ComponentType, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, ChevronsUpDown, Inbox, Search } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -52,24 +53,28 @@ export function DataTable<Row>({
   defaults,
   pageSizeOptions = [15, 50, 100, 200],
   searchable = true,
-  searchPlaceholder = "Search this table…",
+  searchPlaceholder,
   stickyHeader = false,
   onRowClick,
-  emptyMessage = "No records found.",
-  countNoun = "record",
+  emptyMessage,
+  countNoun,
   emptyIcon: EmptyIcon = Inbox,
   toolbar,
   beforeTable,
   fullPageLoading = false,
 }: DataTableProps<Row>) {
+  const { t } = useTranslation()
   const table = useDataTable<Row>({ url, sendData, defaults })
   const visibleColumns = columns.filter((col) => col.visible)
   const colCount = visibleColumns.length
+  const searchPlaceholderText = searchPlaceholder ?? t("table.search")
+  const emptyMessageText = emptyMessage ?? t("table.empty", { defaultValue: "No records found." })
+  const countNounText = countNoun ?? t("table.recordNoun", { defaultValue: "record" })
 
   if (fullPageLoading && table.isLoading) {
     return (
       <div className="animate-page text-primary">
-        <span className="text-4xl font-semibold">Loading…</span>
+        <span className="text-4xl font-semibold">{t("table.loading")}</span>
       </div>
     )
   }
@@ -82,7 +87,7 @@ export function DataTable<Row>({
             <div className="relative max-w-sm flex-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder={searchPlaceholder}
+                placeholder={searchPlaceholderText}
                 value={table.searchInput}
                 onChange={(e) => table.setSearchInput(e.target.value)}
                 className="rounded-none pl-9"
@@ -154,13 +159,13 @@ export function DataTable<Row>({
                     colSpan={colCount}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
-                    Loading…
+                    {t("table.loading")}
                   </td>
                 </tr>
               ) : table.rows.length === 0 ? (
                 <tr>
                   <td colSpan={colCount} className="px-4 py-16">
-                    <div className="flex flex-col items-center gap-3 text-muted-foreground" aria-label={emptyMessage}>
+                    <div className="flex flex-col items-center gap-3 text-muted-foreground" aria-label={emptyMessageText}>
                       <EmptyIcon className="size-12 opacity-40" />
                     </div>
                   </td>
@@ -203,7 +208,7 @@ export function DataTable<Row>({
           onPageChange={table.setPage}
           onPageSizeChange={table.changePageSize}
           disabled={table.isFetching}
-          noun={countNoun}
+          noun={countNounText}
         />
       </Card>
     </div>

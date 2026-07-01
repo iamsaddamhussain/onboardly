@@ -1,5 +1,6 @@
 import { Fragment, type ComponentType, type ReactNode } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import {
   Breadcrumb,
@@ -51,10 +52,11 @@ export function Page({
   children,
   className,
 }: PageProps) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className={cn("animate-page text-primary", className)}>
-        <span className="text-4xl font-semibold">Loading…</span>
+        <span className="text-4xl font-semibold">{t("common.loading")}</span>
       </div>
     )
   }

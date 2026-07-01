@@ -66,4 +66,10 @@ public class AuthService : IAuthService
         user.JobTitle = request.JobTitle?.Trim();
         await _db.SaveChangesAsync();
     }
+
+    public async Task UpdateLanguageAsync(User user, string language)
+    {
+        user.Language = language;
+        await _db.SaveChangesAsync();
+    }
 }

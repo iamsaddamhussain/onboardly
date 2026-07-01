@@ -1,0 +1,159 @@
+{
+  "common": {
+    "appName": "Onboardly",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "back": "Back",
+    "dash": "—"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles & Permissions",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "profileMenu": {
+    "myProfile": "My Profile",
+    "darkMode": "Dark Mode",
+    "language": "Language",
+    "logout": "Logout"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "French"
+  },
+  "toasts": {
+    "profileUpdated": "Profile updated.",
+    "languageUpdated": "Language updated.",
+    "oauthComingSoon": "{{provider}} sign-in is coming soon."
+  },
+  "table": {
+    "search": "Search this table…",
+    "loading": "Loading…",
+    "rowsPerPage": "Rows per page",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "countEmpty": "0 {{noun}}s",
+    "pageOf": "Page {{page}} of {{total}}",
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
+  },
+  "login": {
+    "heroTitle": "Get your team onboarded, faster.",
+    "heroSubtitle": "Track tasks, manage your workspace, and keep everything moving in one simple place.",
+    "workspaceAlt": "Modern workspace",
+    "title": "Sign in to Onboardly",
+    "subtitle": "Use the seeded demo account, or your own credentials.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "orContinue": "Or continue with"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "An overview of your user base.",
+    "totalUsers": "Total Users",
+    "totalUsersDesc": "Everyone in your workspace",
+    "activeUsers": "Active Users",
+    "activeUsersDesc": "Able to sign in right now",
+    "inactiveUsers": "Inactive Users",
+    "inactiveUsersDesc": "Suspended or disabled",
+    "newThisMonth": "New This Month",
+    "newThisMonthDesc": "Joined in the last 30 days"
+  },
+  "users": {
+    "title": "Users",
+    "description": "Manage the people in your workspace.",
+    "newUser": "New User",
+    "search": "Search users…",
+    "empty": "No users found.",
+    "noun": "user",
+    "columns": {
+      "status": "Status",
+      "name": "Name",
+      "email": "Email",
+      "city": "City",
+      "jobTitle": "Job Title",
+      "language": "Language",
+      "joined": "Joined",
+      "mobile": "Mobile",
+      "actions": "Actions"
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit"
+  },
+  "userForm": {
+    "editTitle": "Edit User",
+    "newTitle": "New User",
+    "editDescription": "Update this person's details.",
+    "newDescription": "Add a new person to your workspace.",
+    "basicDetails": "Basic Details",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "password": "Password",
+    "passwordHintEdit": "Leave blank to keep the current password.",
+    "passwordHintNew": "Must be at least 8 characters.",
+    "mobile": "Mobile",
+    "city": "City",
+    "jobTitle": "Job title",
+    "language": "Language",
+    "account": "Account",
+    "accountActive": "Account active",
+    "accountActiveHint": "Inactive users can't sign in.",
+    "roles": "Roles",
+    "rolesHint": "Roles grant this user the permissions needed for their tasks.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "saving": "Saving…",
+    "creating": "Creating…",
+    "saveChanges": "Save Changes",
+    "createUser": "Create User",
+    "discardTitle": "Discard Changes?",
+    "discardDescription": "You have unsaved changes, are you sure you want to discard them?",
+    "discardConfirm": "Discard Changes",
+    "deleteTitle": "Delete User?",
+    "deleteDescription": "This permanently removes this user. This action cannot be undone."
+  },
+  "roles": {
+    "title": "Roles & Permissions",
+    "description": "Create roles, define permissions, and choose what each role can do.",
+    "newRole": "New role",
+    "newRolePlaceholder": "e.g. editor",
+    "newPermission": "New permission",
+    "newPermissionPlaceholder": "e.g. manage_reports",
+    "add": "Add",
+    "userCount_one": "{{count}} user",
+    "userCount_other": "{{count}} users",
+    "deleteTitle": "Delete Role?",
+    "deleteDescription": "Remove the \"{{name}}\" role? Users with it will lose its permissions."
+  },
+  "profile": {
+    "title": "My Profile",
+    "description": "View and update your personal details.",
+    "memberSince": "Member since {{date}}",
+    "basicDetails": "Basic Details",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "emailHint": "Your email is used to sign in and can't be changed here.",
+    "mobile": "Mobile",
+    "city": "City",
+    "jobTitle": "Job title",
+    "saving": "Saving…",
+    "saveChanges": "Save Changes"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your workspace preferences.",
+    "appearance": "Appearance",
+    "appearanceDescription": "Choose how Onboardly looks to you.",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}

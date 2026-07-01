@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { ListTodo } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +53,7 @@ function MicrosoftIcon() {
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const login = useAuthStore((state) => state.login)
 
   const [email, setEmail] = useState("demo@onboardly.dev")
@@ -70,7 +72,7 @@ export default function LoginPage() {
 
   // OAuth is not wired up yet — these are placeholders.
   function handleOAuth(provider: string) {
-    toast.info(`${provider} sign-in is coming soon.`)
+    toast.info(t("toasts.oauthComingSoon", { provider }))
   }
 
   return (
@@ -79,7 +81,7 @@ export default function LoginPage() {
       <div className="relative hidden w-1/2 lg:block">
         <img
           src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80"
-          alt="Modern workspace"
+          alt={t("login.workspaceAlt")}
           className="absolute inset-0 size-full object-cover"
         />
         <div className="absolute inset-0 bg-primary/60" />
@@ -88,15 +90,14 @@ export default function LoginPage() {
             <div className="flex size-9 items-center justify-center bg-background text-foreground">
               <ListTodo className="size-5" />
             </div>
-            <span className="text-lg font-semibold">Onboardly</span>
+            <span className="text-lg font-semibold">{t("common.appName")}</span>
           </div>
           <div>
             <h2 className="text-3xl font-semibold leading-tight">
-              Get your team onboarded, faster.
+              {t("login.heroTitle")}
             </h2>
             <p className="mt-3 max-w-md text-sm text-primary-foreground/80">
-              Track tasks, manage your workspace, and keep everything moving in
-              one simple place.
+              {t("login.heroSubtitle")}
             </p>
           </div>
         </div>
@@ -106,15 +107,15 @@ export default function LoginPage() {
       <div className="flex w-full items-center justify-center bg-muted/40 p-6 lg:w-1/2">
         <Card className="animate-page w-full max-w-sm rounded-none">
           <CardHeader>
-            <CardTitle className="text-xl">Sign in to Onboardly</CardTitle>
+            <CardTitle className="text-xl">{t("login.title")}</CardTitle>
             <CardDescription>
-              Use the seeded demo account, or your own credentials.
+              {t("login.subtitle")}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="flex flex-col gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("login.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -126,7 +127,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("login.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -144,13 +145,13 @@ export default function LoginPage() {
                 className="w-full rounded-none"
                 disabled={submitting}
               >
-                {submitting ? "Signing in…" : "Sign in"}
+                {submitting ? t("login.signingIn") : t("login.signIn")}
               </Button>
 
               <div className="flex w-full items-center gap-3">
                 <span className="h-px flex-1 bg-border" />
                 <span className="text-xs text-muted-foreground">
-                  Or continue with
+                  {t("login.orContinue")}
                 </span>
                 <span className="h-px flex-1 bg-border" />
               </div>
