@@ -113,6 +113,6 @@ public class UsersController : ControllerBase
 
     private static UserListItem ToDto(User user) => new(
         user.Id, user.FirstName, user.LastName, user.Email,
-        user.Mobile, user.City, user.JobTitle, user.Language, user.IsActive, user.CreatedAt,
+        user.Mobile, user.City, user.JobTitle, user.Language, user.IsActive, user.CreatedAt, user.UpdatedAt,
         user.Roles.Select(r => r.Id).ToArray());
 }

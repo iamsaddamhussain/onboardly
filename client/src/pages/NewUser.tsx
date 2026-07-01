@@ -36,6 +36,8 @@ export default function UserFormPage() {
   const { id } = useParams()
   const editing = id != null
   const userId = id ? Number(id) : null
+  // A non-numeric route id (e.g. /users/abc/edit) can never match a real user.
+  const invalidId = editing && (userId == null || Number.isNaN(userId))
   const currentUserId = useAuthStore((s) => s.user?.id)
   // Users cannot delete their own account (enforced on the server too).
   const canDelete = editing && userId != null && userId !== currentUserId
@@ -56,11 +58,16 @@ export default function UserFormPage() {
   )
 
   // In edit mode, load the existing user and prefill the form.
-  const { data: existing, isLoading } = useResource<ManagedUser>(
+  const { data: existing, isLoading, isError } = useResource<ManagedUser>(
     `users/${userId}`,
     {},
-    { enabled: editing },
+    { enabled: editing && !invalidId },
   )
+
+  // If the id is malformed or the user doesn't exist, bounce back to the list.
+  useEffect(() => {
+    if (invalidId || isError) navigate("/users", { replace: true })
+  }, [invalidId, isError, navigate])
 
   useEffect(() => {
     if (!existing) return
@@ -249,9 +256,11 @@ export default function UserFormPage() {
               <Label htmlFor="mobile">{t("userForm.mobile")}</Label>
               <Input
                 id="mobile"
+                type="tel"
+                inputMode="numeric"
                 className="rounded-none"
                 value={form.mobile}
-                onChange={(e) => update("mobile", e.target.value)}
+                onChange={(e) => update("mobile", e.target.value.replace(/[^0-9]/g, ""))}
                 aria-invalid={!!errors.mobile}
               />
               {errors.mobile && (

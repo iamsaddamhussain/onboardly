@@ -41,11 +41,13 @@ public class UserRepository : IUserRepository
             .Sortable("city", (q, desc) => desc ? q.OrderByDescending(u => u.City) : q.OrderBy(u => u.City))
             .Sortable("jobtitle", (q, desc) => desc ? q.OrderByDescending(u => u.JobTitle) : q.OrderBy(u => u.JobTitle))
             .Sortable("status", (q, desc) => desc ? q.OrderByDescending(u => u.IsActive) : q.OrderBy(u => u.IsActive))
+            .Sortable("mobile", (q, desc) => desc ? q.OrderByDescending(u => u.Mobile) : q.OrderBy(u => u.Mobile))
             .Sortable("joined", (q, desc) => desc ? q.OrderByDescending(u => u.CreatedAt) : q.OrderBy(u => u.CreatedAt))
+            .Sortable("updated", (q, desc) => desc ? q.OrderByDescending(u => u.UpdatedAt) : q.OrderBy(u => u.UpdatedAt))
             .DefaultSort(q => q.OrderByDescending(u => u.CreatedAt))
             .ToPagedResultAsync(u => new UserListItem(
                 u.Id, u.FirstName, u.LastName, u.Email,
-                u.Mobile, u.City, u.JobTitle, u.Language, u.IsActive, u.CreatedAt,
+                u.Mobile, u.City, u.JobTitle, u.Language, u.IsActive, u.CreatedAt, u.UpdatedAt,
                 u.Roles.Select(r => r.Id).ToArray()));
 
     public Task<User?> GetById(int id) =>

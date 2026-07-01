@@ -13,6 +13,7 @@ public record UserListItem(
     string Language,
     bool IsActive,
     DateTime CreatedAt,
+    DateTime? UpdatedAt,
     int[] RoleIds
 );
 

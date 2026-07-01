@@ -60,8 +60,12 @@ function buildColumns(t: TFunction) {
       .sortOn("joined")
       .muted()
       .format((value) => formatDate(value as string)),
+    column<ManagedUser>("updatedAt", t("users.columns.updated"))
+      .sortOn("updated")
+      .muted()
+      .format((value) => (value ? formatDate(value as string) : "—")),
     column<ManagedUser>("mobile", t("users.columns.mobile"))
-      .unsortable()
+      .sortOn("mobile")
       .muted()
       .format((value) => (value as string | null) ?? "—"),
     column<ManagedUser>("id", t("users.columns.actions"))

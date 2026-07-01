@@ -48,6 +48,10 @@ public class AuthController : ControllerBase
         if (user is null)
             return Unauthorized(new { message = "Invalid email or password." });
 
+        // Deactivated accounts are not allowed to sign in.
+        if (!user.IsActive)
+            return Unauthorized(new { message = "Your account has been deactivated. Please contact an administrator." });
+
         await SignInAsync(user.Id, user.Email);
         var roles = await _access.GetRolesAsync(user.Id);
         var permissions = await _access.GetPermissionsAsync(user.Id);

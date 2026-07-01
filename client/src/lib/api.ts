@@ -68,6 +68,7 @@ export interface ManagedUser {
   language: string
   isActive: boolean
   createdAt: string
+  updatedAt: string | null
   roleIds: number[]
 }
 
@@ -96,7 +97,9 @@ export type UserSortField =
   | "city"
   | "jobTitle"
   | "status"
+  | "mobile"
   | "joined"
+  | "updated"
 
 export interface UsersQuery {
   search?: string
