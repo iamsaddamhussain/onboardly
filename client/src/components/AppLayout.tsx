@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ProfileMenu } from "@/components/ProfileMenu"
+import { ImpersonationBanner } from "@/components/ImpersonationBanner"
 import { useAuthStore } from "@/store/auth-store"
 import { cn } from "@/lib/utils"
 
@@ -90,6 +91,8 @@ export function AppLayout() {
           </button>
           <ProfileMenu />
         </header>
+
+        <ImpersonationBanner />
 
         <main className="min-w-0 flex-1 overflow-auto">
           <div className="mx-auto max-w-[1600px] min-w-0 px-4 py-6 sm:px-6 md:px-10 md:py-10">

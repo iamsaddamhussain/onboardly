@@ -30,6 +30,10 @@
     "languageUpdated": "Langue mise à jour.",
     "oauthComingSoon": "La connexion avec {{provider}} arrive bientôt."
   },
+  "impersonation": {
+    "loggedInAs": "Vous êtes actuellement connecté en tant que",
+    "return": "Revenir à votre compte"
+  },
   "table": {
     "search": "Rechercher dans ce tableau…",
     "loading": "Chargement…",
@@ -75,6 +79,7 @@
       "status": "Statut",
       "name": "Nom",
       "email": "E-mail",
+      "roles": "Rôles",
       "city": "Ville",
       "jobTitle": "Poste",
       "language": "Langue",
@@ -85,7 +90,8 @@
     },
     "active": "Actif",
     "inactive": "Inactif",
-    "edit": "Modifier"
+    "edit": "Modifier",
+    "impersonate": "Connexion"
   },
   "userForm": {
     "editTitle": "Modifier l'utilisateur",
@@ -114,6 +120,7 @@
     "creating": "Création…",
     "saveChanges": "Enregistrer",
     "createUser": "Créer l'utilisateur",
+    "loginToImpersonate": "Se connecter en tant que",
     "discardTitle": "Abandonner les modifications ?",
     "discardDescription": "Vous avez des modifications non enregistrées, voulez-vous vraiment les abandonner ?",
     "discardConfirm": "Abandonner les modifications",

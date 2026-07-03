@@ -15,6 +15,10 @@ interface AuthState {
   logout: () => Promise<void>
   // Persist the signed-in user's UI language to the server and apply it locally.
   setLanguage: (language: Language) => Promise<void>
+  // Start impersonating another user (super admin only).
+  impersonate: (userId: number) => Promise<User>
+  // Switch back from an impersonated session to the original admin account.
+  stopImpersonating: () => Promise<void>
   // Called by the api client's 401 handler to clear the session locally.
   sessionExpired: () => void
   // Permission/role helpers — drive UI visibility off the user's permissions.
@@ -51,6 +55,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     applyLanguage(language)
     const user = get().user
     if (user) set({ user: { ...user, language } })
+  },
+  impersonate: async (userId) => {
+    const user = await api.impersonate(userId)
+    applyLanguage(user.language as Language)
+    set({ user })
+    return user
+  },
+  stopImpersonating: async () => {
+    const user = await api.stopImpersonating()
+    applyLanguage(user.language as Language)
+    set({ user })
   },
   sessionExpired: () => set({ user: null }),
   hasPermission: (permission) =>

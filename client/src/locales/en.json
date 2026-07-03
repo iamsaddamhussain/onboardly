@@ -30,6 +30,10 @@
     "languageUpdated": "Language updated.",
     "oauthComingSoon": "{{provider}} sign-in is coming soon."
   },
+  "impersonation": {
+    "loggedInAs": "You are currently logged in as",
+    "return": "Return to your account"
+  },
   "table": {
     "search": "Search this table…",
     "loading": "Loading…",
@@ -75,6 +79,7 @@
       "status": "Status",
       "name": "Name",
       "email": "Email",
+      "roles": "Roles",
       "city": "City",
       "jobTitle": "Job Title",
       "language": "Language",
@@ -85,7 +90,8 @@
     },
     "active": "Active",
     "inactive": "Inactive",
-    "edit": "Edit"
+    "edit": "Edit",
+    "impersonate": "Login"
   },
   "userForm": {
     "editTitle": "Edit User",
@@ -114,6 +120,7 @@
     "creating": "Creating…",
     "saveChanges": "Save Changes",
     "createUser": "Create User",
+    "loginToImpersonate": "Login to impersonate",
     "discardTitle": "Discard Changes?",
     "discardDescription": "You have unsaved changes, are you sure you want to discard them?",
     "discardConfirm": "Discard Changes",

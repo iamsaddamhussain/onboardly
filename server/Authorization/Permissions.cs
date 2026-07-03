@@ -9,6 +9,7 @@ public static class Permissions
     public const string ManageUsers = "manage_users";
     public const string ManageRoles = "manage_roles";
     public const string ManagePermissions = "manage_permissions";
+    public const string ImpersonateUsers = "impersonate_users";
 
     public static readonly string[] All =
     {
@@ -16,6 +17,7 @@ public static class Permissions
         ManageUsers,
         ManageRoles,
         ManagePermissions,
+        ImpersonateUsers,
     };
 }
 

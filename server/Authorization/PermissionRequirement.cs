@@ -8,6 +8,9 @@ namespace Onboardly.Server.Authorization;
 public static class AppClaims
 {
     public const string Permission = "permission";
+    // Present on the cookie only while an admin is impersonating another user;
+    // carries the original (admin) user id so we can switch back.
+    public const string Impersonator = "impersonator_id";
 }
 
 public class PermissionRequirement : IAuthorizationRequirement

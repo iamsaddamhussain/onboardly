@@ -6,7 +6,16 @@ public record RegisterRequest(string Email, string Password);
 
 public record LoginRequest(string Email, string Password);
 
-public record UserResponse(int Id, string Email, string Language, string[] Roles, string[] Permissions);
+public record UserResponse(
+    int Id,
+    string Email,
+    string Language,
+    string[] Roles,
+    string[] Permissions,
+    string? FirstName,
+    string? LastName,
+    // True while this session is an admin impersonating another user.
+    bool Impersonating);
 
 public record ProfileResponse(
     int Id,

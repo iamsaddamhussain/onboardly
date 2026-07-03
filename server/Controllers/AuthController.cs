@@ -38,7 +38,7 @@ public class AuthController : ControllerBase
         await SignInAsync(user.Id, user.Email);
         var roles = await _access.GetRolesAsync(user.Id);
         var permissions = await _access.GetPermissionsAsync(user.Id);
-        return Ok(new UserResponse(user.Id, user.Email, user.Language, roles.ToArray(), permissions.ToArray()));
+        return Ok(new UserResponse(user.Id, user.Email, user.Language, roles.ToArray(), permissions.ToArray(), user.FirstName, user.LastName, false));
     }
 
     [HttpPost("login")]
@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
         await SignInAsync(user.Id, user.Email);
         var roles = await _access.GetRolesAsync(user.Id);
         var permissions = await _access.GetPermissionsAsync(user.Id);
-        return Ok(new UserResponse(user.Id, user.Email, user.Language, roles.ToArray(), permissions.ToArray()));
+        return Ok(new UserResponse(user.Id, user.Email, user.Language, roles.ToArray(), permissions.ToArray(), user.FirstName, user.LastName, false));
     }
 
     [Authorize]
@@ -76,7 +76,8 @@ public class AuthController : ControllerBase
         var language = user?.Language ?? "en";
         var roles = await _access.GetRolesAsync(id);
         var permissions = await _access.GetPermissionsAsync(id);
-        return Ok(new UserResponse(id, email, language, roles.ToArray(), permissions.ToArray()));
+        var impersonating = User.FindFirst(AppClaims.Impersonator) is not null;
+        return Ok(new UserResponse(id, email, language, roles.ToArray(), permissions.ToArray(), user?.FirstName, user?.LastName, impersonating));
     }
 
     [Authorize]
@@ -117,6 +118,48 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    // Start impersonating another user. Restricted to accounts holding the
+    // impersonate_users permission (super admin). The original admin id is
+    // stamped onto the cookie so the session can be switched back.
+    [RequirePermission(Permissions.ImpersonateUsers)]
+    [HttpPost("impersonate/{userId:int}")]
+    public async Task<IActionResult> Impersonate(int userId)
+    {
+        var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (currentUserId == userId)
+            return BadRequest(new { message = "You cannot impersonate yourself." });
+
+        var target = await _auth.GetByIdAsync(userId);
+        if (target is null)
+            return NotFound(new { message = "User not found." });
+        if (!target.IsActive)
+            return BadRequest(new { message = "You cannot impersonate a deactivated user." });
+
+        await SignInAsync(target.Id, target.Email, impersonatorId: currentUserId);
+        var roles = await _access.GetRolesAsync(target.Id);
+        var permissions = await _access.GetPermissionsAsync(target.Id);
+        return Ok(new UserResponse(target.Id, target.Email, target.Language, roles.ToArray(), permissions.ToArray(), target.FirstName, target.LastName, true));
+    }
+
+    // Stop impersonating and switch back to the original admin account.
+    [Authorize]
+    [HttpPost("impersonate/stop")]
+    public async Task<IActionResult> StopImpersonating()
+    {
+        var impersonatorId = User.FindFirstValue(AppClaims.Impersonator);
+        if (impersonatorId is null)
+            return BadRequest(new { message = "You are not impersonating anyone." });
+
+        var admin = await _auth.GetByIdAsync(int.Parse(impersonatorId));
+        if (admin is null)
+            return NotFound(new { message = "Original account not found." });
+
+        await SignInAsync(admin.Id, admin.Email);
+        var roles = await _access.GetRolesAsync(admin.Id);
+        var permissions = await _access.GetPermissionsAsync(admin.Id);
+        return Ok(new UserResponse(admin.Id, admin.Email, admin.Language, roles.ToArray(), permissions.ToArray(), admin.FirstName, admin.LastName, false));
+    }
+
     private static ProfileResponse ToProfile(Onboardly.Server.Models.User user) => new(
         user.Id,
         user.FirstName,
@@ -129,13 +172,18 @@ public class AuthController : ControllerBase
         user.IsActive,
         user.CreatedAt);
 
-    private async Task SignInAsync(int userId, string email)
+    private async Task SignInAsync(int userId, string email, int? impersonatorId = null)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId.ToString()),
             new(ClaimTypes.Email, email),
         };
+
+        // Preserve the original admin id while impersonating so the session can
+        // be switched back without re-authenticating.
+        if (impersonatorId is not null)
+            claims.Add(new Claim(AppClaims.Impersonator, impersonatorId.Value.ToString()));
 
         // Stamp roles + permissions onto the cookie so authorization is a fast
         // claim check (this acts as the per-user permission cache).

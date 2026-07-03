@@ -34,6 +34,10 @@ export interface User {
   language: string
   roles: string[]
   permissions: string[]
+  firstName: string | null
+  lastName: string | null
+  // True while an admin is impersonating this user.
+  impersonating: boolean
 }
 
 export interface Profile {
@@ -253,6 +257,13 @@ export const api = {
 
   setLanguage: (language: string) =>
     http.put<void>("/api/auth/language", { language }).then(() => undefined),
+
+  // --- Impersonation (super admin) ---
+  impersonate: (userId: number) =>
+    http.post<User>(`/api/auth/impersonate/${userId}`).then((r) => r.data),
+
+  stopImpersonating: () =>
+    http.post<User>("/api/auth/impersonate/stop").then((r) => r.data),
 
   // --- Roles & permissions ---
   createRole: (name: string) =>

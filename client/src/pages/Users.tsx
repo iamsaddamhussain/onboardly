@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Pencil, Plus, Users } from "lucide-react"
+import { useMemo } from "react"
+import { LogIn, Pencil, Plus, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { TFunction } from "i18next"
 
@@ -7,7 +8,9 @@ import { Page } from "@/components/Page"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/datatable/DataTable"
 import { column } from "@/components/datatable/column"
+import { useResource } from "@/lib/query"
 import { type ManagedUser } from "@/lib/api"
+import { useAuthStore } from "@/store/auth-store"
 import { cn } from "@/lib/utils"
 
 function formatDate(iso: string) {
@@ -18,7 +21,20 @@ function formatDate(iso: string) {
   })
 }
 
-function buildColumns(t: TFunction) {
+function roleLabel(name: string) {
+  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function buildColumns(
+  t: TFunction,
+  options: {
+    canImpersonate: boolean
+    showRoles: boolean
+    rolesById: Map<number, string>
+    currentUserId?: number
+    onImpersonate: (row: ManagedUser) => void
+  },
+) {
   return [
     column<ManagedUser>("isActive", t("users.columns.status"))
       .sortOn("status")
@@ -46,6 +62,31 @@ function buildColumns(t: TFunction) {
         </span>
       )),
     column<ManagedUser>("email", t("users.columns.email")).muted(),
+    ...(options.showRoles
+      ? [
+          column<ManagedUser>("roleIds", t("users.columns.roles"))
+            .unsortable()
+            .render((_, row) => {
+              const names = row.roleIds
+                .map((rid) => options.rolesById.get(rid))
+                .filter((n): n is string => Boolean(n))
+              if (names.length === 0)
+                return <span className="text-muted-foreground">{t("common.dash")}</span>
+              return (
+                <div className="flex flex-wrap gap-1">
+                  {names.map((name) => (
+                    <span
+                      key={name}
+                      className="inline-flex items-center rounded-none bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                    >
+                      {roleLabel(name)}
+                    </span>
+                  ))}
+                </div>
+              )
+            }),
+        ]
+      : []),
     column<ManagedUser>("city", t("users.columns.city"))
       .muted()
       .format((value) => (value as string | null) ?? "—"),
@@ -72,16 +113,28 @@ function buildColumns(t: TFunction) {
       .unsortable()
       .right()
       .render((_, row) => (
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="rounded-none"
-        >
-          <Link to={`/users/${row.id}/edit`}>
-            <Pencil /> {t("users.edit")}
-          </Link>
-        </Button>
+        <div className="flex items-center justify-end">
+          {options.canImpersonate && row.id !== options.currentUserId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer rounded-none text-primary hover:bg-primary/10 hover:text-primary"
+              onClick={() => options.onImpersonate(row)}
+            >
+              <LogIn /> {t("users.impersonate")}
+            </Button>
+          )}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="cursor-pointer rounded-none"
+          >
+            <Link to={`/users/${row.id}/edit`}>
+              <Pencil /> {t("users.edit")}
+            </Link>
+          </Button>
+        </div>
       )),
   ]
 }
@@ -89,7 +142,35 @@ function buildColumns(t: TFunction) {
 export default function UsersPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const currentUser = useAuthStore((s) => s.user)
+  const hasPermission = useAuthStore((s) => s.hasPermission)
+  const impersonate = useAuthStore((s) => s.impersonate)
+  const canManageRoles = hasPermission("manage_roles")
+
+  // Role names for the badges column; only fetchable with manage_roles.
+  const { data: rolesData } = useResource<{ roles: { id: number; name: string }[] }>(
+    "roles",
+    {},
+    { enabled: canManageRoles },
+  )
+  const rolesById = useMemo(() => {
+    const map = new Map<number, string>()
+    rolesData?.roles.forEach((r) => map.set(r.id, r.name))
+    return map
+  }, [rolesData])
+
+  async function handleImpersonate(row: ManagedUser) {
+    await impersonate(row.id)
+    navigate("/dashboard", { replace: true })
+  }
+
+  const columns = buildColumns(t, {
+    canImpersonate: hasPermission("impersonate_users"),
+    showRoles: canManageRoles,
+    rolesById,
+    currentUserId: currentUser?.id,
+    onImpersonate: handleImpersonate,
+  })
 
   return (
     <Page

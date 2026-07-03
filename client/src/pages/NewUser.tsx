@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, IdCard, Settings2, ShieldCheck, Trash2, UserPen, UserPlus } from "lucide-react"
+import { ArrowLeft, IdCard, LogIn, Settings2, ShieldCheck, Trash2, UserPen, UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
@@ -42,6 +42,11 @@ export default function UserFormPage() {
   // Users cannot delete their own account (enforced on the server too).
   const canDelete = editing && userId != null && userId !== currentUserId
   const canManageRoles = useAuthStore((s) => s.hasPermission("manage_roles"))
+  const canImpersonate = useAuthStore((s) => s.hasPermission("impersonate_users"))
+  const impersonate = useAuthStore((s) => s.impersonate)
+  // Impersonation is a super-admin action and never applies to your own account.
+  const canImpersonateUser =
+    editing && userId != null && userId !== currentUserId && canImpersonate
 
   const [form, setForm] = useState<UserFormState>(empty)
   const [dirty, setDirty] = useState(false)
@@ -159,6 +164,12 @@ export default function UserFormPage() {
     navigate("/users")
   }
 
+  async function handleImpersonate() {
+    if (userId == null) return
+    await impersonate(userId)
+    navigate("/dashboard", { replace: true })
+  }
+
   return (
     <Page
       title={editing ? t("userForm.editTitle") : t("userForm.newTitle")}
@@ -175,13 +186,24 @@ export default function UserFormPage() {
       ]}
       loading={editing && isLoading}
       actions={
-        <Button
-          variant="outline"
-          className="rounded-none"
-          onClick={requestLeave}
-        >
-          <ArrowLeft /> {t("common.back")}
-        </Button>
+        <div className="flex gap-2">
+          {canImpersonateUser && (
+            <Button
+              variant="outline"
+              className="cursor-pointer rounded-none text-primary hover:text-primary"
+              onClick={handleImpersonate}
+            >
+              <LogIn /> {t("userForm.loginToImpersonate")}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className="rounded-none"
+            onClick={requestLeave}
+          >
+            <ArrowLeft /> {t("common.back")}
+          </Button>
+        </div>
       }
     >
       <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-4">
