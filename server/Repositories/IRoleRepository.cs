@@ -22,4 +22,8 @@ public interface IRoleRepository
 
     // Used by the controller's validation to keep role names unique.
     Task<bool> NameExistsAsync(string name);
+
+    // Whether the current caller may modify the given role in the active context
+    // (its own tenant's roles, or global roles at platform scope).
+    bool CanManage(Role role);
 }

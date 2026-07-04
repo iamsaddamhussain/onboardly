@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { LayoutDashboard, UserCheck, UserPlus, Users, UserX } from "lucide-react"
+import { Building2, Building, LayoutDashboard, UserCheck, UserPlus, Users, UserX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
@@ -11,6 +11,13 @@ const cards = [
   { key: "activeUsers", icon: UserCheck },
   { key: "inactiveUsers", icon: UserX },
   { key: "newThisMonth", icon: UserPlus },
+] as const
+
+// Platform-only tenant cards, shown on the "all organizations" view.
+const orgCards = [
+  { key: "totalOrganizations", icon: Building2 },
+  { key: "activeOrganizations", icon: Building },
+  { key: "inactiveOrganizations", icon: Building },
 ] as const
 
 // Animate from 0 up to the target whenever the target changes.
@@ -68,6 +75,29 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {data?.totalOrganizations != null && (
+        <div className="mt-8 flex flex-col gap-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">
+            {t("dashboard.organizationsSection")}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {orgCards.map(({ key, icon: Icon }) => (
+              <div
+                key={key}
+                className="flex items-center gap-4 rounded-none border bg-background p-5"
+              >
+                <Icon className="size-9 shrink-0 text-muted-foreground" />
+                <div className="flex flex-1 flex-col text-right">
+                  <StatValue value={data?.[key] ?? 0} />
+                  <span className="mt-1.5 text-sm font-semibold">{t(`dashboard.${key}`)}</span>
+                  <span className="text-xs text-muted-foreground">{t(`dashboard.${key}Desc`)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </Page>
   )
 }

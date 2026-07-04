@@ -9,6 +9,9 @@ import DashboardPage from "@/pages/Dashboard"
 import UsersPage from "@/pages/Users"
 import NewUserPage from "@/pages/NewUser"
 import RolesPage from "@/pages/Roles"
+import OrganizationsPage from "@/pages/Organizations"
+import OrganizationPage from "@/pages/Organization"
+import AuditLogPage from "@/pages/AuditLog"
 import ProfilePage from "@/pages/Profile"
 import SettingsPage from "@/pages/Settings"
 
@@ -31,6 +34,14 @@ export default function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route
+          path="/organization"
+          element={
+            <PermissionRoute permission={["manage_users", "manage_roles", "platform.manage_organizations"]}>
+              <OrganizationPage />
+            </PermissionRoute>
+          }
+        />
         <Route
           path="/users"
           element={
@@ -61,6 +72,22 @@ export default function App() {
           element={
             <PermissionRoute permission="manage_roles">
               <RolesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/organizations"
+          element={
+            <PermissionRoute permission="platform.manage_organizations">
+              <OrganizationsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/audit"
+          element={
+            <PermissionRoute permission={["view_audit", "platform.view_all_audits"]}>
+              <AuditLogPage />
             </PermissionRoute>
           }
         />

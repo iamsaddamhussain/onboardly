@@ -12,6 +12,10 @@
     "dashboard": "Dashboard",
     "users": "Users",
     "roles": "Roles & Permissions",
+    "organization": "Organization",
+    "organizations": "Organizations",
+    "audit": "Change History",
+    "adminArea": "Admin Area",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
@@ -33,6 +37,64 @@
   "impersonation": {
     "loggedInAs": "You are currently logged in as",
     "return": "Return to your account"
+  },
+  "organization": {
+    "switch": "Switch organization",
+    "allOrganizations": "All organizations"
+  },
+  "organizationProfile": {
+    "title": "Organization",
+    "description": "Your organization's details and recent activity.",
+    "slug": "Slug",
+    "tier": "Plan",
+    "members": "Members",
+    "created": "Created",
+    "active": "Active",
+    "inactive": "Inactive",
+    "timeline": "Recent activity",
+    "empty": "No recent activity.",
+    "noActiveOrg": "Switch into an organization to view its profile."
+  },
+  "organizations": {
+    "title": "Organizations",
+    "description": "Onboard and manage tenant organizations.",
+    "newOrganization": "New organization",
+    "namePlaceholder": "e.g. Acme Corporation",
+    "tierPlaceholder": "Plan (optional)",
+    "add": "Add",
+    "search": "Search organizations…",
+    "empty": "No organizations found.",
+    "noun": "organization",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "columns": {
+      "name": "Name",
+      "slug": "Slug",
+      "tier": "Plan",
+      "users": "Users",
+      "created": "Created",
+      "status": "Status",
+      "actions": "Actions"
+    }
+  },
+  "audit": {
+    "title": "Change History",
+    "description": "Review auditable actions across the system.",
+    "search": "Search audit log…",
+    "empty": "No audit records found.",
+    "noun": "record",
+    "system": "System",
+    "platform": "Platform",
+    "columns": {
+      "timestamp": "When",
+      "action": "Action",
+      "entity": "Entity",
+      "user": "User",
+      "organization": "Organization",
+      "ip": "IP Address"
+    }
   },
   "table": {
     "search": "Search this table…",
@@ -66,7 +128,14 @@
     "inactiveUsers": "Inactive Users",
     "inactiveUsersDesc": "Suspended or disabled",
     "newThisMonth": "New This Month",
-    "newThisMonthDesc": "Joined in the last 30 days"
+    "newThisMonthDesc": "Joined in the last 30 days",
+    "organizationsSection": "Organizations",
+    "totalOrganizations": "Total Organizations",
+    "totalOrganizationsDesc": "All tenants on the platform",
+    "activeOrganizations": "Active Organizations",
+    "activeOrganizationsDesc": "Currently enabled tenants",
+    "inactiveOrganizations": "Inactive Organizations",
+    "inactiveOrganizationsDesc": "Suspended or disabled tenants"
   },
   "users": {
     "title": "Users",
@@ -153,7 +222,9 @@
     "city": "City",
     "jobTitle": "Job title",
     "saving": "Saving…",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "activityTitle": "Recent activity",
+    "activityEmpty": "No recent activity."
   },
   "settings": {
     "title": "Settings",

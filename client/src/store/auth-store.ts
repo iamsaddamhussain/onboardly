@@ -19,6 +19,10 @@ interface AuthState {
   impersonate: (userId: number) => Promise<User>
   // Switch back from an impersonated session to the original admin account.
   stopImpersonating: () => Promise<void>
+  // Global users only: view a specific tenant via the header org selector.
+  switchOrganization: (organizationId: number) => Promise<User>
+  // Global users only: exit the tenant view back to platform-wide scope.
+  stopSwitchOrganization: () => Promise<User>
   // Called by the api client's 401 handler to clear the session locally.
   sessionExpired: () => void
   // Permission/role helpers — drive UI visibility off the user's permissions.
@@ -66,6 +70,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const user = await api.stopImpersonating()
     applyLanguage(user.language as Language)
     set({ user })
+  },
+  switchOrganization: async (organizationId) => {
+    const user = await api.switchOrganization(organizationId)
+    set({ user })
+    return user
+  },
+  stopSwitchOrganization: async () => {
+    const user = await api.stopSwitchOrganization()
+    set({ user })
+    return user
   },
   sessionExpired: () => set({ user: null }),
   hasPermission: (permission) =>

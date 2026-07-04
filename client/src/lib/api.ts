@@ -38,6 +38,71 @@ export interface User {
   lastName: string | null
   // True while an admin is impersonating this user.
   impersonating: boolean
+  // "global" (platform user) or "org" (tenant user).
+  scope: string
+  // The user's home tenant. Null for platform/global users.
+  organizationId: number | null
+  organizationName: string | null
+  // Tenant a global user is currently viewing via the org selector, if any.
+  activeOrganizationId: number | null
+  activeOrganizationName: string | null
+}
+
+export interface Organization {
+  id: number
+  name: string
+  slug: string
+  isActive: boolean
+}
+
+// Row for the platform-admin organizations table.
+export interface OrganizationRow {
+  id: number
+  name: string
+  slug: string
+  isActive: boolean
+  subscriptionTier: string | null
+  createdAt: string
+  userCount: number
+}
+
+export interface CreateOrganizationInput {
+  name: string
+  slug?: string
+  subscriptionTier?: string
+}
+
+export interface UpdateOrganizationInput {
+  name: string
+  isActive: boolean
+  subscriptionTier?: string
+}
+
+// A single audit-trail row.
+export interface AuditLogEntry {
+  id: number
+  organizationId: number | null
+  userId: number | null
+  action: string
+  entityType: string
+  entityId: string
+  oldValues: string | null
+  newValues: string | null
+  timestamp: string
+  ipAddress: string | null
+  userAgent: string | null
+}
+
+// Read-only company profile: the active organization's details + timeline.
+export interface OrganizationProfile {
+  id: number
+  name: string
+  slug: string
+  isActive: boolean
+  subscriptionTier: string | null
+  createdAt: string
+  userCount: number
+  recentActivity: AuditLogEntry[]
 }
 
 export interface Profile {
@@ -93,6 +158,10 @@ export interface DashboardStats {
   activeUsers: number
   inactiveUsers: number
   newThisMonth: number
+  // Present only on the platform-wide view (global user, no active org).
+  totalOrganizations: number | null
+  activeOrganizations: number | null
+  inactiveOrganizations: number | null
 }
 
 export type UserSortField =
@@ -265,14 +334,31 @@ export const api = {
   stopImpersonating: () =>
     http.post<User>("/api/auth/impersonate/stop").then((r) => r.data),
 
+  // --- Platform (global users): organization selector ---
+  listOrganizations: () =>
+    http.get<Organization[]>("/api/platform/organizations").then((r) => r.data),
+
+  switchOrganization: (organizationId: number) =>
+    http
+      .post<User>(`/api/platform/switch-org/${organizationId}`)
+      .then((r) => r.data),
+
+  stopSwitchOrganization: () =>
+    http.post<User>("/api/platform/switch-org/stop").then((r) => r.data),
+
+  // --- Organizations management (platform.manage_organizations) ---
+  createOrganization: (data: CreateOrganizationInput) =>
+    http.post<OrganizationRow>("/api/organizations", data).then((r) => r.data),
+
+  updateOrganization: (id: number, data: UpdateOrganizationInput) =>
+    http.put<void>(`/api/organizations/${id}`, data).then(() => undefined),
+
   // --- Roles & permissions ---
   createRole: (name: string) =>
     http.post("/api/roles", { name }).then((r) => r.data),
   deleteRole: (id: number) => http.delete(`/api/roles/${id}`).then(() => undefined),
   setRolePermissions: (id: number, permissionIds: number[]) =>
     http.put(`/api/roles/${id}/permissions`, { permissionIds }).then(() => undefined),
-  createPermission: (name: string) =>
-    http.post("/api/permissions", { name }).then((r) => r.data),
   setUserRoles: (userId: number, roleIds: number[]) =>
     http.put(`/api/users/${userId}/roles`, { roleIds }).then(() => undefined),
 }

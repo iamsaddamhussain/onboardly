@@ -12,6 +12,10 @@
     "dashboard": "Tableau de bord",
     "users": "Utilisateurs",
     "roles": "Rôles et permissions",
+    "organization": "Organisation",
+    "organizations": "Organisations",
+    "audit": "Historique des modifications",
+    "adminArea": "Zone d'administration",
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu"
   },
@@ -33,6 +37,64 @@
   "impersonation": {
     "loggedInAs": "Vous êtes actuellement connecté en tant que",
     "return": "Revenir à votre compte"
+  },
+  "organization": {
+    "switch": "Changer d'organisation",
+    "allOrganizations": "Toutes les organisations"
+  },
+  "organizationProfile": {
+    "title": "Organisation",
+    "description": "Les détails de votre organisation et son activité récente.",
+    "slug": "Identifiant",
+    "tier": "Forfait",
+    "members": "Membres",
+    "created": "Créée",
+    "active": "Active",
+    "inactive": "Inactive",
+    "timeline": "Activité récente",
+    "empty": "Aucune activité récente.",
+    "noActiveOrg": "Basculez dans une organisation pour voir son profil."
+  },
+  "organizations": {
+    "title": "Organisations",
+    "description": "Intégrez et gérez les organisations locataires.",
+    "newOrganization": "Nouvelle organisation",
+    "namePlaceholder": "ex. Acme Corporation",
+    "tierPlaceholder": "Forfait (facultatif)",
+    "add": "Ajouter",
+    "search": "Rechercher des organisations…",
+    "empty": "Aucune organisation trouvée.",
+    "noun": "organisation",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "columns": {
+      "name": "Nom",
+      "slug": "Identifiant",
+      "tier": "Forfait",
+      "users": "Utilisateurs",
+      "created": "Créée",
+      "status": "Statut",
+      "actions": "Actions"
+    }
+  },
+  "audit": {
+    "title": "Historique des modifications",
+    "description": "Consultez les actions auditables du système.",
+    "search": "Rechercher dans le journal…",
+    "empty": "Aucun enregistrement d'audit trouvé.",
+    "noun": "enregistrement",
+    "system": "Système",
+    "platform": "Plateforme",
+    "columns": {
+      "timestamp": "Quand",
+      "action": "Action",
+      "entity": "Entité",
+      "user": "Utilisateur",
+      "organization": "Organisation",
+      "ip": "Adresse IP"
+    }
   },
   "table": {
     "search": "Rechercher dans ce tableau…",
@@ -66,7 +128,14 @@
     "inactiveUsers": "Utilisateurs inactifs",
     "inactiveUsersDesc": "Suspendus ou désactivés",
     "newThisMonth": "Nouveaux ce mois-ci",
-    "newThisMonthDesc": "Inscrits au cours des 30 derniers jours"
+    "newThisMonthDesc": "Inscrits au cours des 30 derniers jours",
+    "organizationsSection": "Organisations",
+    "totalOrganizations": "Total des organisations",
+    "totalOrganizationsDesc": "Tous les locataires de la plateforme",
+    "activeOrganizations": "Organisations actives",
+    "activeOrganizationsDesc": "Locataires actuellement activés",
+    "inactiveOrganizations": "Organisations inactives",
+    "inactiveOrganizationsDesc": "Locataires suspendus ou désactivés"
   },
   "users": {
     "title": "Utilisateurs",
@@ -153,7 +222,9 @@
     "city": "Ville",
     "jobTitle": "Poste",
     "saving": "Enregistrement…",
-    "saveChanges": "Enregistrer"
+    "saveChanges": "Enregistrer",
+    "activityTitle": "Activité récente",
+    "activityEmpty": "Aucune activité récente."
   },
   "settings": {
     "title": "Paramètres",

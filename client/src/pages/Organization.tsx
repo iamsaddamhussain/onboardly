@@ -1,0 +1,96 @@
+import { Building2, CalendarDays, CreditCard, Hash, Users } from "lucide-react"
+import { useTranslation } from "react-i18next"
+
+import { Page } from "@/components/Page"
+import { Card } from "@/components/ui/card"
+import { Timeline } from "@/components/Timeline"
+import { useResource } from "@/lib/query"
+import { type OrganizationProfile } from "@/lib/api"
+import { cn } from "@/lib/utils"
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
+
+function InfoRow({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: typeof Hash
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
+      <span className="w-28 shrink-0 text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium">{children}</span>
+    </div>
+  )
+}
+
+export default function OrganizationPage() {
+  const { t } = useTranslation()
+  // Returns 204 (empty body) on the platform-wide view -> falsy data.
+  const { data, isLoading } = useResource<OrganizationProfile>("organization")
+
+  return (
+    <Page
+      title={t("organizationProfile.title")}
+      icon={Building2}
+      description={t("organizationProfile.description")}
+      breadcrumbs={[
+        { label: t("nav.dashboard"), to: "/dashboard" },
+        { label: t("organizationProfile.title") },
+      ]}
+      loading={isLoading}
+    >
+      {!data ? (
+        <p className="text-sm text-muted-foreground">{t("organizationProfile.noActiveOrg")}</p>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <Card className="gap-5 rounded-none p-6">
+            <div className="flex items-center gap-4">
+              <span className="flex size-14 items-center justify-center rounded-none bg-primary text-primary-foreground">
+                <Building2 className="size-7" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-semibold">{data.name}</h2>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 text-xs font-medium",
+                    data.isActive ? "text-emerald-500" : "text-muted-foreground",
+                  )}
+                >
+                  <span className={cn("size-2", data.isActive ? "bg-emerald-500" : "bg-muted-foreground/50")} />
+                  {data.isActive ? t("organizationProfile.active") : t("organizationProfile.inactive")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t pt-4">
+              <InfoRow icon={Hash} label={t("organizationProfile.slug")}>{data.slug}</InfoRow>
+              <InfoRow icon={CreditCard} label={t("organizationProfile.tier")}>
+                {data.subscriptionTier ?? t("common.dash")}
+              </InfoRow>
+              <InfoRow icon={Users} label={t("organizationProfile.members")}>{data.userCount}</InfoRow>
+              <InfoRow icon={CalendarDays} label={t("organizationProfile.created")}>
+                {formatDate(data.createdAt)}
+              </InfoRow>
+            </div>
+          </Card>
+
+          <Card className="gap-4 rounded-none p-6">
+            <h3 className="text-sm font-semibold">{t("organizationProfile.timeline")}</h3>
+            <Timeline entries={data.recentActivity} emptyLabel={t("organizationProfile.empty")} />
+          </Card>
+        </div>
+      )}
+    </Page>
+  )
+}

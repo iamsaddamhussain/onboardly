@@ -16,5 +16,9 @@ public class User : IEntity
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    // Tenant membership. Null => platform/global user (not tied to any org).
+    public int? OrganizationId { get; set; }
+    public Organization? Organization { get; set; }
+
     public ICollection<Role> Roles { get; set; } = new List<Role>();
 }

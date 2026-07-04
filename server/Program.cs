@@ -13,17 +13,22 @@ using Onboardly.Server.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Database (PostgreSQL via EF Core / Npgsql) ---
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<AuditInterceptor>();
+builder.Services.AddDbContext<AppDbContext>((sp, options) =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
 
 // --- Password hashing & app services ---
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IUserAccessService, UserAccessService>();
+builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 
@@ -55,6 +60,9 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+// Layer 3 resource-authorization handlers (tenant boundary + resource ownership).
+builder.Services.AddScoped<IAuthorizationHandler, SameOrganizationHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnerHandler>();
 builder.Services.AddControllers(options =>
 {
     // Enable route-model binding for IEntity parameters.
@@ -95,6 +103,8 @@ else
     app.UseHttpsRedirection();
 }
 app.UseAuthentication();
+// Resolve the active tenant from cookie claims before authorization/endpoints.
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

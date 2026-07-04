@@ -16,7 +16,7 @@ public class PermissionRepository : IPermissionRepository
     public async Task<IReadOnlyList<PermissionListItem>> GetAll() =>
         await _db.Permissions
             .OrderBy(p => p.Name)
-            .Select(p => new PermissionListItem(p.Id, p.Name))
+            .Select(p => new PermissionListItem(p.Id, p.Name, p.IsGlobal))
             .ToListAsync();
 
     public async Task<Permission> Create(CreatePermissionRequest request)

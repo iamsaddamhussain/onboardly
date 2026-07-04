@@ -15,7 +15,15 @@ public record UserResponse(
     string? FirstName,
     string? LastName,
     // True while this session is an admin impersonating another user.
-    bool Impersonating);
+    bool Impersonating,
+    // "global" (platform user) or "org" (tenant user).
+    string Scope,
+    // The user's home tenant. Null for platform/global users.
+    int? OrganizationId,
+    string? OrganizationName,
+    // Tenant a global user is currently viewing via the org selector, if any.
+    int? ActiveOrganizationId,
+    string? ActiveOrganizationName);
 
 public record ProfileResponse(
     int Id,

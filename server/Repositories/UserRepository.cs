@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Onboardly.Server.Authorization;
 using Onboardly.Server.Data;
 using Onboardly.Server.Dtos;
 using Onboardly.Server.Infrastructure;
@@ -13,15 +14,17 @@ public class UserRepository : IUserRepository
 {
     private readonly AppDbContext _db;
     private readonly IPasswordHasher<User> _hasher;
+    private readonly ITenantContext _tenant;
 
-    public UserRepository(AppDbContext db, IPasswordHasher<User> hasher)
+    public UserRepository(AppDbContext db, IPasswordHasher<User> hasher, ITenantContext tenant)
     {
         _db = db;
         _hasher = hasher;
+        _tenant = tenant;
     }
 
     public Task<PagedResult<UserListItem>> GetAll(DataTableRequest request) =>
-        _db.Users
+        ScopedUsers()
             .ToDataTable(request)
             .Searchable(term =>
             {
@@ -72,6 +75,11 @@ public class UserRepository : IUserRepository
         // Password presence is validated by the controller before we get here.
         user.PasswordHash = _hasher.HashPassword(user, request.Password!);
 
+        // New users belong to the active tenant (org user's own org, or the org a
+        // global admin has switched into). Left null for the platform-wide view.
+        if (_tenant.OrganizationId is int organizationId)
+            user.OrganizationId = organizationId;
+
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
         return user;
@@ -110,5 +118,16 @@ public class UserRepository : IUserRepository
         user.JobTitle = request.JobTitle?.Trim();
         user.Language = string.IsNullOrWhiteSpace(request.Language) ? "en" : request.Language;
         user.IsActive = request.IsActive;
+    }
+
+    // Restrict user queries to the active organization. A global user with no
+    // active org sees everyone (platform-wide); org users and switched-in global
+    // users see only their tenant.
+    private IQueryable<User> ScopedUsers()
+    {
+        var query = _db.Users.AsQueryable();
+        if (!_tenant.IgnoreTenantBoundary)
+            query = query.Where(u => u.OrganizationId == _tenant.OrganizationId);
+        return query;
     }
 }

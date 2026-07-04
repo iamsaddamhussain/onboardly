@@ -16,18 +16,4 @@ public class PermissionsController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll() => Ok(await _permissions.GetAll());
-
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreatePermissionRequest request)
-    {
-        var name = request.Name.Trim();
-        if (await _permissions.NameExistsAsync(name))
-        {
-            ModelState.AddModelError(nameof(request.Name), "A permission with that name already exists.");
-            return ValidationProblem(ModelState);
-        }
-
-        var permission = await _permissions.Create(request);
-        return Created($"/api/permissions/{permission.Id}", new { permission.Id, permission.Name });
-    }
 }

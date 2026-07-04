@@ -11,10 +11,12 @@ import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { api } from "@/lib/api"
 import { useResource, useResourceMutation } from "@/lib/query"
+import { useAuthStore } from "@/store/auth-store"
 
 interface PermissionItem {
   id: number
   name: string
+  isGlobal: boolean
 }
 
 interface RoleSummary {
@@ -23,14 +25,16 @@ interface RoleSummary {
   permissionIds: number[]
   permissions: string[]
   userCount: number
+  scope: string
+  // Whether the active context may edit/delete this role (false for shared
+  // system templates and other tenants' roles).
+  editable: boolean
 }
 
 interface RolesResponse {
   roles: RoleSummary[]
   permissions: PermissionItem[]
 }
-
-const SUPER_ADMIN = "super_admin"
 
 // Display snake_case names as "Title Case" while keeping the raw value for the API.
 function humanize(name: string) {
@@ -40,15 +44,11 @@ function humanize(name: string) {
 export default function RolesPage() {
   const { t } = useTranslation()
   const { data, isLoading } = useResource<RolesResponse>("roles")
+  const hasPermission = useAuthStore((s) => s.hasPermission)
   const [newRole, setNewRole] = useState("")
-  const [newPermission, setNewPermission] = useState("")
   const [deleteRole, setDeleteRole] = useState<RoleSummary | null>(null)
 
   const createRole = useResourceMutation((name: string) => api.createRole(name), ["roles"])
-  const createPermission = useResourceMutation(
-    (name: string) => api.createPermission(name),
-    ["roles"],
-  )
   const setPermissions = useResourceMutation(
     (v: { id: number; permissionIds: number[] }) =>
       api.setRolePermissions(v.id, v.permissionIds),
@@ -77,52 +77,27 @@ export default function RolesPage() {
       loading={isLoading}
     >
       <div className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="gap-3 rounded-none p-5">
-            <Label htmlFor="newRole">{t("roles.newRole")}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="newRole"
-                className="rounded-none"
-                placeholder={t("roles.newRolePlaceholder")}
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value)}
-              />
-              <Button
-                className="rounded-none"
-                disabled={!newRole.trim()}
-                onClick={() =>
-                  createRole.mutate(newRole.trim(), { onSuccess: () => setNewRole("") })
-                }
-              >
-                <Plus /> {t("roles.add")}
-              </Button>
-            </div>
-          </Card>
-          <Card className="gap-3 rounded-none p-5">
-            <Label htmlFor="newPerm">{t("roles.newPermission")}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="newPerm"
-                className="rounded-none"
-                placeholder={t("roles.newPermissionPlaceholder")}
-                value={newPermission}
-                onChange={(e) => setNewPermission(e.target.value)}
-              />
-              <Button
-                className="rounded-none"
-                disabled={!newPermission.trim()}
-                onClick={() =>
-                  createPermission.mutate(newPermission.trim(), {
-                    onSuccess: () => setNewPermission(""),
-                  })
-                }
-              >
-                <Plus /> {t("roles.add")}
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <Card className="gap-3 rounded-none p-5 sm:max-w-md">
+          <Label htmlFor="newRole">{t("roles.newRole")}</Label>
+          <div className="flex gap-2">
+            <Input
+              id="newRole"
+              className="rounded-none"
+              placeholder={t("roles.newRolePlaceholder")}
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+            />
+            <Button
+              className="rounded-none"
+              disabled={!newRole.trim()}
+              onClick={() =>
+                createRole.mutate(newRole.trim(), { onSuccess: () => setNewRole("") })
+              }
+            >
+              <Plus /> {t("roles.add")}
+            </Button>
+          </div>
+        </Card>
 
         {data?.roles.map((role) => (
           <Card key={role.id} className="gap-4 rounded-none p-5">
@@ -133,7 +108,7 @@ export default function RolesPage() {
                   {t("roles.userCount", { count: role.userCount })}
                 </p>
               </div>
-              {role.name !== SUPER_ADMIN && (
+              {role.editable && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -149,7 +124,7 @@ export default function RolesPage() {
                 <label key={perm.id} className="flex items-center gap-2 text-sm">
                   <Switch
                     checked={role.permissionIds.includes(perm.id)}
-                    disabled={role.name === SUPER_ADMIN}
+                    disabled={!role.editable || !hasPermission(perm.name)}
                     onCheckedChange={() => togglePermission(role, perm.id)}
                   />
                   {humanize(perm.name)}

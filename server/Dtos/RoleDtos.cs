@@ -23,7 +23,12 @@ public record RoleListItem(
     string Name,
     int[] PermissionIds,
     string[] Permissions,
-    int UserCount);
+    int UserCount,
+    // "Global" or "Organization".
+    string Scope,
+    // Whether the current caller may edit/delete this role in the active context
+    // (false for shared system templates and other tenants' roles).
+    bool Editable);
 
 // Lightweight option used by the permissions list and the roles screen picker.
-public record PermissionListItem(int Id, string Name);
+public record PermissionListItem(int Id, string Name, bool IsGlobal);

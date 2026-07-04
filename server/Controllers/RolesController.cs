@@ -13,11 +13,13 @@ public class RolesController : ControllerBase
 {
     private readonly IRoleRepository _roles;
     private readonly IPermissionRepository _permissions;
+    private readonly ITenantContext _tenant;
 
-    public RolesController(IRoleRepository roles, IPermissionRepository permissions)
+    public RolesController(IRoleRepository roles, IPermissionRepository permissions, ITenantContext tenant)
     {
         _roles = roles;
         _permissions = permissions;
+        _tenant = tenant;
     }
 
     [HttpGet]
@@ -25,7 +27,12 @@ public class RolesController : ControllerBase
     {
         var roles = await _roles.GetAll();
         var permissions = await _permissions.GetAll();
-        return Ok(new { roles, permissions });
+        // Offer only the permissions valid for the active scope: platform view
+        // exposes global permissions, an org context exposes org permissions.
+        var scoped = _tenant.IgnoreTenantBoundary
+            ? permissions.Where(p => p.IsGlobal)
+            : permissions.Where(p => !p.IsGlobal);
+        return Ok(new { roles, permissions = scoped });
     }
 
     [HttpPost]
@@ -48,8 +55,35 @@ public class RolesController : ControllerBase
         var role = await _roles.GetByIdWithPermissions(id);
         if (role is null)
             return NotFound(new { message = "Role not found." });
+        if (!_roles.CanManage(role))
+            return Forbid();
+        if (Authorization.Roles.System.Contains(role.Name))
+            return BadRequest(new { message = "System roles cannot be modified." });
 
-        await _roles.SetPermissions(role, request.PermissionIds);
+        // Privilege-escalation guard: a caller may only add or remove permissions
+        // they personally hold. Permissions they lack stay untouched, so no one
+        // can grant themselves (or strip from others) access beyond their own.
+        var actorPermissions = User.FindAll(AppClaims.Permission).Select(c => c.Value).ToHashSet();
+        var allPermissions = await _permissions.GetAll();
+        var currentIds = role.Permissions.Select(p => p.Id).ToHashSet();
+        var requestedIds = request.PermissionIds.ToHashSet();
+
+        var finalIds = new HashSet<int>(currentIds);
+        foreach (var permission in allPermissions)
+        {
+            var wanted = requestedIds.Contains(permission.Id);
+            var current = currentIds.Contains(permission.Id);
+            if (wanted == current)
+                continue; // no change requested for this permission
+            if (!actorPermissions.Contains(permission.Name))
+                continue; // caller can't toggle a permission they don't hold
+            if (wanted)
+                finalIds.Add(permission.Id);
+            else
+                finalIds.Remove(permission.Id);
+        }
+
+        await _roles.SetPermissions(role, finalIds.ToArray());
         return NoContent();
     }
 
@@ -59,8 +93,10 @@ public class RolesController : ControllerBase
         if (role is null)
             return NotFound(new { message = "Role not found." });
 
-        if (role.Name == Authorization.Roles.SuperAdmin)
-            return BadRequest(new { message = "The super admin role cannot be deleted." });
+        if (Authorization.Roles.System.Contains(role.Name))
+            return BadRequest(new { message = "System roles cannot be deleted." });
+        if (!_roles.CanManage(role))
+            return Forbid();
 
         await _roles.Delete(role);
         return NoContent();

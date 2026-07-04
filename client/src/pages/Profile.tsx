@@ -5,12 +5,13 @@ import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
+import { Timeline } from "@/components/Timeline"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { useResource, useResourceMutation } from "@/lib/query"
-import { api, ApiError, type Profile } from "@/lib/api"
+import { api, ApiError, type AuditLogEntry, type Profile } from "@/lib/api"
 
 const empty = {
   firstName: "",
@@ -36,6 +37,7 @@ export default function ProfilePage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: profile, isLoading } = useResource<Profile>("auth/profile")
+  const { data: activity } = useResource<AuditLogEntry[]>("auth/activity")
 
   useEffect(() => {
     if (!profile) return
@@ -218,6 +220,13 @@ export default function ProfilePage() {
           </Button>
         </div>
       </form>
+
+      <div className="mt-8 max-w-2xl">
+        <Card className="gap-4 rounded-none p-6">
+          <h3 className="text-sm font-semibold">{t("profile.activityTitle")}</h3>
+          <Timeline entries={activity ?? []} emptyLabel={t("profile.activityEmpty")} />
+        </Card>
+      </div>
     </Page>
   )
 }

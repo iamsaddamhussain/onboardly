@@ -1,27 +1,59 @@
 import { useEffect, useState } from "react"
-import { LayoutDashboard, ListTodo, Menu, ShieldCheck, Users, X } from "lucide-react"
+import { Building2, History, LayoutDashboard, ListTodo, Menu, ShieldCheck, Users, X } from "lucide-react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ProfileMenu } from "@/components/ProfileMenu"
+import { OrgSwitcher } from "@/components/OrgSwitcher"
 import { ImpersonationBanner } from "@/components/ImpersonationBanner"
 import { useAuthStore } from "@/store/auth-store"
 import { cn } from "@/lib/utils"
 
-const navItems = [
-  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, permission: null },
-  { to: "/users", labelKey: "nav.users", icon: Users, permission: "manage_users" },
-  { to: "/roles", labelKey: "nav.roles", icon: ShieldCheck, permission: "manage_roles" },
+type NavItem = {
+  to: string
+  labelKey: string
+  icon: typeof LayoutDashboard
+  permission: string | string[] | null
+  // Only show when acting within a tenant (org user, or global user switched in).
+  requiresOrgContext?: boolean
+}
+
+const navGroups: { labelKey: string | null; items: NavItem[] }[] = [
+  {
+    labelKey: null,
+    items: [
+      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, permission: null },
+      { to: "/organization", labelKey: "nav.organization", icon: Building2, permission: ["manage_users", "manage_roles", "platform.manage_organizations"], requiresOrgContext: true },
+    ],
+  },
+  {
+    labelKey: "nav.adminArea",
+    items: [
+      { to: "/organizations", labelKey: "nav.organizations", icon: Building2, permission: "platform.manage_organizations" },
+      { to: "/users", labelKey: "nav.users", icon: Users, permission: "manage_users" },
+      { to: "/roles", labelKey: "nav.roles", icon: ShieldCheck, permission: "manage_roles" },
+      { to: "/audit", labelKey: "nav.audit", icon: History, permission: ["view_audit", "platform.view_all_audits"] },
+    ],
+  },
 ]
 
 export function AppLayout() {
   const { t } = useTranslation()
+  const user = useAuthStore((s) => s.user)
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const [open, setOpen] = useState(false)
   const location = useLocation()
-  const visibleNav = navItems.filter(
-    (item) => item.permission == null || hasPermission(item.permission),
-  )
+
+  const inTenantContext = user?.scope === "org" || user?.activeOrganizationId != null
+  const canSee = (item: NavItem) => {
+    if (item.requiresOrgContext && !inTenantContext) return false
+    if (item.permission == null) return true
+    const required = Array.isArray(item.permission) ? item.permission : [item.permission]
+    return required.some((p) => hasPermission(p))
+  }
+  const visibleGroups = navGroups
+    .map((group) => ({ ...group, items: group.items.filter(canSee) }))
+    .filter((group) => group.items.length > 0)
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => setOpen(false), [location.pathname])
@@ -58,37 +90,49 @@ export function AppLayout() {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-2 p-4">
-          {visibleNav.map(({ to, labelKey, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-none px-4 py-3 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                )
-              }
-            >
-              <Icon className="size-5" />
-              {t(labelKey)}
-            </NavLink>
+        <nav className="flex flex-1 flex-col gap-6 p-4">
+          {visibleGroups.map((group, index) => (
+            <div key={group.labelKey ?? index} className="flex flex-col gap-2">
+              {group.labelKey && (
+                <span className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {t(group.labelKey)}
+                </span>
+              )}
+              {group.items.map(({ to, labelKey, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 rounded-none px-4 py-3 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )
+                  }
+                >
+                  <Icon className="size-5" />
+                  {t(labelKey)}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between border-b bg-background px-4 md:justify-end md:px-6">
-          <button
-            type="button"
-            className="md:hidden"
-            onClick={() => setOpen(true)}
-            aria-label={t("nav.openMenu")}
-          >
-            <Menu className="size-5" />
-          </button>
+        <header className="flex h-14 items-center justify-between border-b bg-background px-4 md:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="md:hidden"
+              onClick={() => setOpen(true)}
+              aria-label={t("nav.openMenu")}
+            >
+              <Menu className="size-5" />
+            </button>
+            <OrgSwitcher />
+          </div>
           <ProfileMenu />
         </header>
 

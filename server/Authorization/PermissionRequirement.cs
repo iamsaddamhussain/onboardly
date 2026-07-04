@@ -11,6 +11,16 @@ public static class AppClaims
     // Present on the cookie only while an admin is impersonating another user;
     // carries the original (admin) user id so we can switch back.
     public const string Impersonator = "impersonator_id";
+    // Authorization scope of the signed-in user: "global" (platform) or "org".
+    public const string Scope = "scope";
+    // Home tenant of an organization user. Absent for global/platform users.
+    public const string OrganizationId = "organization_id";
+    // Tenant a global user has switched into via the org selector. Absent unless
+    // a platform user is actively viewing a specific organization.
+    public const string ActiveOrganizationId = "active_organization_id";
+
+    public const string ScopeGlobal = "global";
+    public const string ScopeOrganization = "org";
 }
 
 public class PermissionRequirement : IAuthorizationRequirement
