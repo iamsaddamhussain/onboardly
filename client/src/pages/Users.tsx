@@ -30,6 +30,7 @@ function buildColumns(
   options: {
     canImpersonate: boolean
     showRoles: boolean
+    showOrganization: boolean
     rolesById: Map<number, string>
     currentUserId?: number
     onImpersonate: (row: ManagedUser) => void
@@ -62,6 +63,14 @@ function buildColumns(
         </span>
       )),
     column<ManagedUser>("email", t("users.columns.email")).muted(),
+    ...(options.showOrganization
+      ? [
+          column<ManagedUser>("organizationName", t("users.columns.organization"))
+            .unsortable()
+            .muted()
+            .format((value) => (value as string | null) ?? "—"),
+        ]
+      : []),
     ...(options.showRoles
       ? [
           column<ManagedUser>("roleIds", t("users.columns.roles"))
@@ -146,6 +155,7 @@ export default function UsersPage() {
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const impersonate = useAuthStore((s) => s.impersonate)
   const canManageRoles = hasPermission("manage_roles")
+  const canAssignOrg = hasPermission("platform.switch_organization")
 
   // Role names for the badges column; only fetchable with manage_roles.
   const { data: rolesData } = useResource<{ roles: { id: number; name: string }[] }>(
@@ -167,6 +177,7 @@ export default function UsersPage() {
   const columns = buildColumns(t, {
     canImpersonate: hasPermission("impersonate_users"),
     showRoles: canManageRoles,
+    showOrganization: canAssignOrg,
     rolesById,
     currentUserId: currentUser?.id,
     onImpersonate: handleImpersonate,

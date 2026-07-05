@@ -51,13 +51,15 @@ public class UserRepository : IUserRepository
             .ToPagedResultAsync(u => new UserListItem(
                 u.Id, u.FirstName, u.LastName, u.Email,
                 u.Mobile, u.City, u.JobTitle, u.Language, u.IsActive, u.CreatedAt, u.UpdatedAt,
-                u.Roles.Select(r => r.Id).ToArray()));
+                u.Roles.Select(r => r.Id).ToArray(),
+                u.OrganizationId,
+                u.Organization != null ? u.Organization.Name : null));
 
     public Task<User?> GetById(int id) =>
         _db.Users.FirstOrDefaultAsync(u => u.Id == id);
 
     public Task<User?> GetByIdWithRoles(int id) =>
-        _db.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
+        _db.Users.Include(u => u.Roles).Include(u => u.Organization).FirstOrDefaultAsync(u => u.Id == id);
 
     public async Task SetRoles(User user, int[] roleIds)
     {
@@ -75,10 +77,9 @@ public class UserRepository : IUserRepository
         // Password presence is validated by the controller before we get here.
         user.PasswordHash = _hasher.HashPassword(user, request.Password!);
 
-        // New users belong to the active tenant (org user's own org, or the org a
-        // global admin has switched into). Left null for the platform-wide view.
-        if (_tenant.OrganizationId is int organizationId)
-            user.OrganizationId = organizationId;
+        // Platform-wide global admins may place the user in any org (or leave
+        // them global); everyone else is stamped with their active tenant.
+        user.OrganizationId = ResolveOrganizationId(request, null);
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
@@ -88,6 +89,8 @@ public class UserRepository : IUserRepository
     public async Task Update(User user, SaveUserRequest request)
     {
         ApplyRequest(user, request);
+
+        user.OrganizationId = ResolveOrganizationId(request, user.OrganizationId);
 
         // A password is optional on update; only change it when one is supplied
         // (its length is already validated by the attribute when present).
@@ -105,6 +108,20 @@ public class UserRepository : IUserRepository
 
     public Task<bool> EmailExistsAsync(string email, int? excludeId = null) =>
         _db.Users.AnyAsync(u => u.Email == email && (excludeId == null || u.Id != excludeId));
+
+    public Task<bool> OrganizationExistsAsync(int organizationId) =>
+        _db.Organizations.AnyAsync(o => o.Id == organizationId);
+
+    // Decide which organization a user should belong to. Platform-wide global
+    // admins (no active tenant boundary) may assign any org from the request or
+    // leave the user global; everyone else is locked to their active tenant, so
+    // the request value is ignored and the current/tenant org is kept.
+    private int? ResolveOrganizationId(SaveUserRequest request, int? current)
+    {
+        if (_tenant.IgnoreTenantBoundary)
+            return request.OrganizationId;
+        return _tenant.OrganizationId ?? current;
+    }
 
     // Copy the request's editable fields onto a User entity (shared by create
     // and update).

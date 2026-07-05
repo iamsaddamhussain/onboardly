@@ -28,9 +28,19 @@ public class PlatformController : ControllerBase
     }
 
     [HttpGet("organizations")]
-    public async Task<IActionResult> Organizations()
+    public async Task<IActionResult> Organizations([FromQuery] string? search)
     {
-        var organizations = await _db.Organizations
+        var query = _db.Organizations.AsQueryable();
+
+        // Optional server-side filter so the client can drive a typeahead lookup.
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var like = $"%{search.Trim()}%";
+            query = query.Where(o =>
+                EF.Functions.ILike(o.Name, like) || EF.Functions.ILike(o.Slug, like));
+        }
+
+        var organizations = await query
             .OrderBy(o => o.Name)
             .Select(o => new OrganizationListItem(o.Id, o.Name, o.Slug, o.IsActive))
             .ToListAsync();

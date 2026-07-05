@@ -139,6 +139,8 @@ export interface ManagedUser {
   createdAt: string
   updatedAt: string | null
   roleIds: number[]
+  organizationId: number | null
+  organizationName: string | null
 }
 
 export interface CreateUserInput {
@@ -335,8 +337,12 @@ export const api = {
     http.post<User>("/api/auth/impersonate/stop").then((r) => r.data),
 
   // --- Platform (global users): organization selector ---
-  listOrganizations: () =>
-    http.get<Organization[]>("/api/platform/organizations").then((r) => r.data),
+  listOrganizations: (search?: string) =>
+    http
+      .get<Organization[]>("/api/platform/organizations", {
+        params: search ? { search } : {},
+      })
+      .then((r) => r.data),
 
   switchOrganization: (organizationId: number) =>
     http

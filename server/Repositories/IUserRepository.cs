@@ -24,4 +24,7 @@ public interface IUserRepository
 
     // Used by the controller's validation to keep emails unique.
     Task<bool> EmailExistsAsync(string email, int? excludeId = null);
+
+    // Used by the controller to validate an assigned organization exists.
+    Task<bool> OrganizationExistsAsync(int organizationId);
 }

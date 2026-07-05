@@ -137,6 +137,12 @@
     "inactiveOrganizations": "Inactive Organizations",
     "inactiveOrganizationsDesc": "Suspended or disabled tenants"
   },
+  "lookup": {
+    "typeToSearch": "Type to search…",
+    "searchAnother": "Search another…",
+    "searching": "Searching…",
+    "noResults": "No results found."
+  },
   "users": {
     "title": "Users",
     "description": "Manage the people in your workspace.",
@@ -148,6 +154,7 @@
       "status": "Status",
       "name": "Name",
       "email": "Email",
+      "organization": "Organization",
       "roles": "Roles",
       "city": "City",
       "jobTitle": "Job Title",
@@ -181,6 +188,10 @@
     "account": "Account",
     "accountActive": "Account active",
     "accountActiveHint": "Inactive users can't sign in.",
+    "organization": "Organization",
+    "organizationNone": "No organization (platform)",
+    "organizationPlaceholder": "Search organizations…",
+    "organizationHint": "The organization this user belongs to.",
     "roles": "Roles",
     "rolesHint": "Roles grant this user the permissions needed for their tasks.",
     "cancel": "Cancel",

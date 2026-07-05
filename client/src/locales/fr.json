@@ -137,6 +137,12 @@
     "inactiveOrganizations": "Organisations inactives",
     "inactiveOrganizationsDesc": "Locataires suspendus ou désactivés"
   },
+  "lookup": {
+    "typeToSearch": "Saisissez pour rechercher…",
+    "searchAnother": "Rechercher un autre…",
+    "searching": "Recherche…",
+    "noResults": "Aucun résultat trouvé."
+  },
   "users": {
     "title": "Utilisateurs",
     "description": "Gérez les personnes de votre espace de travail.",
@@ -148,6 +154,7 @@
       "status": "Statut",
       "name": "Nom",
       "email": "E-mail",
+      "organization": "Organisation",
       "roles": "Rôles",
       "city": "Ville",
       "jobTitle": "Poste",
@@ -181,6 +188,10 @@
     "account": "Compte",
     "accountActive": "Compte actif",
     "accountActiveHint": "Les utilisateurs inactifs ne peuvent pas se connecter.",
+    "organization": "Organisation",
+    "organizationNone": "Aucune organisation (plateforme)",
+    "organizationPlaceholder": "Rechercher des organisations…",
+    "organizationHint": "L'organisation à laquelle appartient cet utilisateur.",
     "roles": "Rôles",
     "rolesHint": "Les rôles accordent à cet utilisateur les permissions nécessaires à ses tâches.",
     "cancel": "Annuler",

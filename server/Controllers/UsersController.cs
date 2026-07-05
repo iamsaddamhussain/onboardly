@@ -17,11 +17,13 @@ public class UsersController : ControllerBase
 {
     private readonly IUserRepository _users;
     private readonly IUserAccessService _access;
+    private readonly ITenantContext _tenant;
 
-    public UsersController(IUserRepository users, IUserAccessService access)
+    public UsersController(IUserRepository users, IUserAccessService access, ITenantContext tenant)
     {
         _users = users;
         _access = access;
+        _tenant = tenant;
     }
 
     [HttpGet]
@@ -69,6 +71,8 @@ public class UsersController : ControllerBase
         if (await _users.EmailExistsAsync(email))
             ModelState.AddModelError(nameof(request.Email), "An account with that email already exists.");
 
+        await ValidateOrganizationAsync(request);
+
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
@@ -86,10 +90,12 @@ public class UsersController : ControllerBase
         var email = request.Email.Trim().ToLowerInvariant();
 
         if (await _users.EmailExistsAsync(email, user.Id))
-        {
             ModelState.AddModelError(nameof(request.Email), "An account with that email already exists.");
+
+        await ValidateOrganizationAsync(request);
+
+        if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
-        }
 
         await _users.Update(user, request);
 
@@ -114,5 +120,20 @@ public class UsersController : ControllerBase
     private static UserListItem ToDto(User user) => new(
         user.Id, user.FirstName, user.LastName, user.Email,
         user.Mobile, user.City, user.JobTitle, user.Language, user.IsActive, user.CreatedAt, user.UpdatedAt,
-        user.Roles.Select(r => r.Id).ToArray());
+        user.Roles.Select(r => r.Id).ToArray(),
+        user.OrganizationId, user.Organization?.Name);
+
+    // Only platform-wide global admins can pick a tenant; when they do, make sure
+    // it actually exists. Scoped admins can't change the org, so nothing to check.
+    private async Task ValidateOrganizationAsync(SaveUserRequest request)
+    {
+        if (!_tenant.IgnoreTenantBoundary)
+            return;
+
+        if (request.OrganizationId is int organizationId &&
+            !await _users.OrganizationExistsAsync(organizationId))
+        {
+            ModelState.AddModelError(nameof(request.OrganizationId), "Selected organization was not found.");
+        }
+    }
 }

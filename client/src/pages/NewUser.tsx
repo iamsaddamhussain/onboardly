@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
+import { ServersideLookup } from "@/components/ServersideLookup"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useResource, useResourceMutation } from "@/lib/query"
 import { save, destroy } from "@/lib/resource"
-import { ApiError, api, type ManagedUser } from "@/lib/api"
+import { ApiError, api, type ManagedUser, type Organization } from "@/lib/api"
 import { useAuthStore } from "@/store/auth-store"
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n"
 
@@ -26,6 +27,7 @@ const empty = {
   jobTitle: "",
   language: "en",
   isActive: true,
+  organizationId: null as number | null,
 }
 
 type UserFormState = typeof empty
@@ -43,6 +45,8 @@ export default function UserFormPage() {
   const canDelete = editing && userId != null && userId !== currentUserId
   const canManageRoles = useAuthStore((s) => s.hasPermission("manage_roles"))
   const canImpersonate = useAuthStore((s) => s.hasPermission("impersonate_users"))
+  // Only platform admins can move a user between organizations.
+  const canAssignOrg = useAuthStore((s) => s.hasPermission("platform.switch_organization"))
   const impersonate = useAuthStore((s) => s.impersonate)
   // Impersonation is a super-admin action and never applies to your own account.
   const canImpersonateUser =
@@ -54,6 +58,9 @@ export default function UserFormPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [roleIds, setRoleIds] = useState<number[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
+  // The selected organization object (drives the lookup's label); its id is kept
+  // in the form state for submission.
+  const [orgSelection, setOrgSelection] = useState<Organization | null>(null)
 
   // Roles list, only needed when this admin can assign roles.
   const { data: rolesData } = useResource<{ roles: { id: number; name: string }[] }>(
@@ -86,8 +93,20 @@ export default function UserFormPage() {
       jobTitle: existing.jobTitle ?? "",
       language: existing.language,
       isActive: existing.isActive,
+      organizationId: existing.organizationId,
     })
     setRoleIds(existing.roleIds ?? [])
+    // Seed the lookup with the user's current org so it shows a label on load.
+    setOrgSelection(
+      existing.organizationId != null
+        ? {
+            id: existing.organizationId,
+            name: existing.organizationName ?? "",
+            slug: "",
+            isActive: true,
+          }
+        : null,
+    )
     setDirty(false)
   }, [existing])
 
@@ -106,6 +125,9 @@ export default function UserFormPage() {
         jobTitle: data.jobTitle.trim() || undefined,
         language: data.language,
         isActive: data.isActive,
+        // Only platform admins may set the organization; otherwise the server
+        // keeps the user in the active tenant regardless of what is sent.
+        organizationId: canAssignOrg ? data.organizationId : undefined,
       }),
     ["users", "dashboard/stats"],
   )
@@ -335,6 +357,31 @@ export default function UserFormPage() {
               ))}
             </select>
           </div>
+          {canAssignOrg && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="organization">{t("userForm.organization")}</Label>
+              <ServersideLookup<Organization>
+                id="organization"
+                value={orgSelection}
+                onChange={(value) => {
+                  const org = (value as Organization | null) ?? null
+                  setOrgSelection(org)
+                  update("organizationId", org ? org.id : null)
+                }}
+                queryCallback={(term) => api.listOrganizations(term)}
+                optionLabel={(org) => org.name}
+                placeholder="userForm.organizationPlaceholder"
+                aria-invalid={!!errors.organizationId}
+              />
+              {errors.organizationId ? (
+                <p className="text-xs text-destructive">{errors.organizationId}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {t("userForm.organizationHint")}
+                </p>
+              )}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{t("userForm.accountActive")}</p>

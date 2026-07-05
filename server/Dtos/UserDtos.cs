@@ -14,7 +14,9 @@ public record UserListItem(
     bool IsActive,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    int[] RoleIds
+    int[] RoleIds,
+    int? OrganizationId,
+    string? OrganizationName
 );
 
 // One request shape for both create and update, with declarative validation.
@@ -49,6 +51,10 @@ public record SaveUserRequest(
     [RegularExpression("^(en|fr)$", ErrorMessage = "Unsupported language.")]
     string? Language,
 
-    bool IsActive
+    bool IsActive,
+
+    // Tenant the user belongs to. Only honoured for platform-wide global admins;
+    // otherwise the user is locked to the active tenant. Null => platform user.
+    int? OrganizationId
 );
 
