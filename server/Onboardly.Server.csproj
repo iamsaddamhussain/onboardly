@@ -5,6 +5,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Onboardly.Server</RootNamespace>
+    <!-- Email templates are embedded and rendered by RazorLight, not compiled as
+         MVC views, so disable the default Razor view compilation. -->
+    <EnableDefaultRazorGenerateItems>false</EnableDefaultRazorGenerateItems>
+    <!-- Required by RazorLight: preserves the compile-time reference assemblies in
+         the deps file so templates can be compiled at runtime. -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +19,15 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="RazorLight" Version="2.3.1" />
+  </ItemGroup>
+
+  <!-- Email Razor templates: embed them in the assembly so RazorLight can load
+       them by name at runtime without shipping loose files. -->
+  <ItemGroup>
+    <Content Remove="Services\Email\Templates\**\*.cshtml" />
+    <None Remove="Services\Email\Templates\**\*.cshtml" />
+    <EmbeddedResource Include="Services\Email\Templates\**\*.cshtml" />
   </ItemGroup>
 
 </Project>

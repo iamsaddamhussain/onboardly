@@ -7,6 +7,7 @@ using Onboardly.Server.Dtos;
 using Onboardly.Server.Infrastructure;
 using Onboardly.Server.Models;
 using Onboardly.Server.Repositories;
+using Onboardly.Server.Services.Email;
 
 namespace Onboardly.Server.Controllers;
 
@@ -18,12 +19,18 @@ public class UsersController : ControllerBase
     private readonly IUserRepository _users;
     private readonly IUserAccessService _access;
     private readonly ITenantContext _tenant;
+    private readonly IEmailService _email;
 
-    public UsersController(IUserRepository users, IUserAccessService access, ITenantContext tenant)
+    public UsersController(
+        IUserRepository users,
+        IUserAccessService access,
+        ITenantContext tenant,
+        IEmailService email)
     {
         _users = users;
         _access = access;
         _tenant = tenant;
+        _email = email;
     }
 
     [HttpGet]
@@ -77,6 +84,10 @@ public class UsersController : ControllerBase
             return ValidationProblem(ModelState);
 
         var user = await _users.Create(request);
+
+        // Dispatch-and-forget: the email service owns delivery, mode, and failure
+        // handling, so account creation is never blocked or broken by email.
+        await _email.SendAccountCreatedAsync(user);
 
         return Created($"/api/users/{user.Id}", ToDto(user));
     }

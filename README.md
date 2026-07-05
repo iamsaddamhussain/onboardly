@@ -116,6 +116,54 @@ The stack ships with Docker Compose (PostgreSQL, API, and an Nginx-served client
 - **Database password** — `DB_PASSWORD` in `.env` (used by both Postgres and the server connection string in Compose).
 - **CORS dev origins** — `Cors:DevOrigins` in server configuration (defaults to the Vite dev port).
 
+## Email Notifications
+
+An extensible email framework (`server/Services/Email/`) renders Razor (`.cshtml`) templates and delivers them through a configurable provider and delivery mode. Business code simply calls `IEmailService` — delivery is dispatch-and-forget, so email failures never break the request.
+
+**Building blocks**
+
+- `IEmailService` — domain API (e.g. `SendAccountCreatedAsync`); builds the model, renders, and dispatches.
+- `IEmailSender` — routes each message by **delivery mode** (Sync = send inline, Queue = hand off to the background processor).
+- `IEmailProvider` — pluggable delivery: `Log` (dev default, no real send) and `Smtp` (Mailtrap / any SMTP server). SendGrid, SES, Mailgun, etc. can be added without touching callers.
+- `IEmailRenderer` — renders embedded Razor templates via RazorLight (`_Layout.cshtml` + per-email templates), with organization/brand customization.
+- `IEmailQueue` + `EmailQueueProcessor` — in-process background queue with retries and failed-delivery logging; the queue seam allows swapping in Hangfire, a Worker Service, or a message broker (RabbitMQ / Azure Service Bus) later.
+
+**Configuration** (`Email` section):
+
+```jsonc
+"Email": {
+  "Mode": "Sync",            // Sync | Queue
+  "Provider": "Log",         // Log | Smtp
+  "FromAddress": "no-reply@onboardly.dev",
+  "FromName": "Onboardly",
+  "AppBaseUrl": "http://localhost:5174",
+  "Smtp": {                   // Mailtrap-ready defaults for local dev
+    "Host": "sandbox.smtp.mailtrap.io",
+    "Port": 587,
+    "Username": "",           // put real creds in user-secrets, not source control
+    "Password": "",
+    "UseStartTls": true
+  },
+  "Branding": { "CompanyName": "Onboardly", "LogoUrl": "", "PrimaryColor": "#4f46e5" },
+  "Queue": { "MaxAttempts": 3, "RetryDelaySeconds": 10 }
+}
+```
+
+**Local development (Mailtrap)** — keep `Provider: "Log"` to print emails to the console with no delivery, or set `Provider: "Smtp"` and add your Mailtrap credentials via user-secrets to trap mail in your Mailtrap inbox:
+
+```bash
+cd server
+dotnet user-secrets set "Email:Provider" "Smtp"
+dotnet user-secrets set "Email:Smtp:Username" "<mailtrap-username>"
+dotnet user-secrets set "Email:Smtp:Password" "<mailtrap-password>"
+```
+
+Set `Email:Mode` to `Queue` to exercise the background processor (retries + failure logging).
+
+**Emails**
+
+- **Account Created** — sent when an admin creates a user; includes the user's name, organization, sign-in URL, and a temporary-password/setup link, with organization branding.
+
 ## License
 
 Proprietary — all rights reserved.

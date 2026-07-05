@@ -3,12 +3,19 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Onboardly.Server.Authorization;
 using Onboardly.Server.Data;
 using Onboardly.Server.Infrastructure;
 using Onboardly.Server.Models;
 using Onboardly.Server.Repositories;
 using Onboardly.Server.Services;
+using Onboardly.Server.Services.Email;
+using RazorLight;
+
+// Load a local .env (if present) into environment variables before building
+// configuration, so secrets can live in .env for local development.
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +38,35 @@ builder.Services.AddScoped<IUserAccessService, UserAccessService>();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
+
+// --- Email notification framework ---
+// Configurable delivery (Sync/Queue) + pluggable provider (Log/SMTP-Mailtrap),
+// with Razor (.cshtml) templates rendered by RazorLight.
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+
+// Embedded Razor templates engine (templates live in Services/Email/Templates).
+builder.Services.AddSingleton<IRazorLightEngine>(
+    new RazorLightEngineBuilder()
+        .UseEmbeddedResourcesProject(typeof(Onboardly.Server.Services.Email.Templates.EmailTemplatesRoot))
+        .UseMemoryCachingProvider()
+        .Build());
+
+// Providers: register both and pick one from configuration (Email:Provider).
+builder.Services.AddSingleton<LogEmailProvider>();
+builder.Services.AddSingleton<SmtpEmailProvider>();
+builder.Services.AddSingleton<IEmailProvider>(sp =>
+{
+    var mode = sp.GetRequiredService<IOptions<EmailOptions>>().Value.Provider;
+    return mode.Equals("Smtp", StringComparison.OrdinalIgnoreCase)
+        ? sp.GetRequiredService<SmtpEmailProvider>()
+        : sp.GetRequiredService<LogEmailProvider>();
+});
+
+builder.Services.AddSingleton<IEmailQueue, ChannelEmailQueue>();
+builder.Services.AddScoped<IEmailRenderer, RazorEmailRenderer>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHostedService<EmailQueueProcessor>();
 
 // --- Cookie-based authentication (stateful sessions, HTTP-only cookie) ---
 builder.Services
