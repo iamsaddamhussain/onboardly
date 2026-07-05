@@ -14,20 +14,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="RazorLight" Version="2.3.1" />
+    <PackageReference Include="PreMailer.Net" Version="2.6.0" />
   </ItemGroup>
 
-  <!-- Email Razor templates: embed them in the assembly so RazorLight can load
-       them by name at runtime without shipping loose files. -->
+  <!-- Email Razor templates + stylesheet: embed them in the assembly so they can
+       be loaded by name at runtime without shipping loose files. -->
   <ItemGroup>
     <Content Remove="Services\Email\Templates\**\*.cshtml" />
     <None Remove="Services\Email\Templates\**\*.cshtml" />
     <EmbeddedResource Include="Services\Email\Templates\**\*.cshtml" />
+    <Content Remove="Services\Email\Templates\**\*.css" />
+    <None Remove="Services\Email\Templates\**\*.css" />
+    <EmbeddedResource Include="Services\Email\Templates\**\*.css" />
   </ItemGroup>
 
 </Project>

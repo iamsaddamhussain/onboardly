@@ -1,0 +1,89 @@
+/* Email styles — shadcn "neutral" tokens (mirrors client/src/index.css).
+   Authored as classes here, then inlined into each element's style attribute at
+   render time by PreMailer so the email renders consistently everywhere
+   (including Outlook). The brandable primary colour is injected per-send by the
+   layout (.brand-bg / .brand-link) since it can vary by organization. */
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5; /* --muted */
+    font-family: Arial, Helvetica, sans-serif;
+    color: #0a0a0a; /* --foreground */
+}
+
+.email-wrapper {
+    background-color: #f5f5f5; /* --muted */
+    padding: 24px 0;
+}
+
+.email-card {
+    width: 600px;
+    max-width: 100%;
+    background-color: #ffffff; /* --card */
+    border: 1px solid #e5e5e5; /* --border */
+}
+
+.email-header {
+    padding: 24px 32px;
+}
+
+.email-header-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.email-body {
+    padding: 32px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #0a0a0a; /* --foreground */
+}
+
+.email-footer {
+    padding: 20px 32px;
+    border-top: 1px solid #e5e5e5; /* --border */
+    font-size: 12px;
+    color: #737373; /* --muted-foreground */
+}
+
+.email-h1 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    color: #0a0a0a; /* --foreground */
+}
+
+.email-p {
+    margin: 0 0 16px;
+}
+
+.email-note {
+    margin: 0 0 20px;
+}
+
+.email-muted {
+    margin: 0;
+    font-size: 13px;
+    color: #737373; /* --muted-foreground */
+}
+
+.email-code {
+    display: inline-block;
+    padding: 10px 16px;
+    background-color: #f5f5f5; /* --muted */
+    border: 1px solid #e5e5e5; /* --border */
+    font-family: monospace;
+    font-size: 15px;
+}
+
+.email-button {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* --primary-foreground (static) */
+.brand-fg {
+    color: #fafafa;
+}

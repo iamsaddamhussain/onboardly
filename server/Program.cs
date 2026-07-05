@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Onboardly.Server.Authorization;
 using Onboardly.Server.Data;
 using Onboardly.Server.Infrastructure;
@@ -62,11 +64,43 @@ builder.Services.AddSingleton<IEmailProvider>(sp =>
         : sp.GetRequiredService<LogEmailProvider>();
 });
 
-builder.Services.AddSingleton<IEmailQueue, ChannelEmailQueue>();
 builder.Services.AddScoped<IEmailRenderer, RazorEmailRenderer>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddHostedService<EmailQueueProcessor>();
+
+// --- Hangfire (durable background jobs for email delivery) ---
+// PostgreSQL-backed storage shares the app database; Hangfire owns its own
+// schema, dashboard, distributed locking and retries — replacing the custom
+// polling processor. Retry behaviour is driven from Email:Queue configuration.
+var emailQueueOptions = builder.Configuration
+    .GetSection(EmailOptions.SectionName)
+    .Get<EmailOptions>()?.Queue ?? new QueueOptions();
+
+builder.Services.AddHangfire(config =>
+{
+    config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(o =>
+            o.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+});
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<EmailDeliveryJob>();
+
+// Replace Hangfire's default 10-attempt retry with the configured policy so a
+// single AutomaticRetry filter (not two) governs email jobs.
+foreach (var existing in GlobalJobFilters.Filters
+             .Where(f => f.Instance is AutomaticRetryAttribute)
+             .ToList())
+{
+    GlobalJobFilters.Filters.Remove(existing.Instance);
+}
+GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute
+{
+    Attempts = emailQueueOptions.MaxAttempts,
+    DelaysInSeconds = new[] { emailQueueOptions.RetryDelaySeconds },
+});
 
 // --- Cookie-based authentication (stateful sessions, HTTP-only cookie) ---
 builder.Services
@@ -142,6 +176,15 @@ app.UseAuthentication();
 // Resolve the active tenant from cookie claims before authorization/endpoints.
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
+
+// Hangfire monitoring dashboard. Dev-only: the default authorization filter
+// blocks remote access, so it's not exposed in production without an explicit
+// auth filter.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHangfireDashboard("/hangfire");
+}
+
 app.MapControllers();
 
 app.Run();

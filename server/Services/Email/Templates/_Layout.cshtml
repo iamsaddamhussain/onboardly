@@ -6,36 +6,42 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@Model.CompanyName</title>
+    <style>
+        @Raw(EmailStyles.Css)
+        /* Brandable primary — can vary per organization. */
+        .brand-bg { background-color: @Model.PrimaryColor; }
+        .brand-link { color: @Model.PrimaryColor; }
+    </style>
 </head>
-<body style="margin:0;padding:0;background-color:@EmailTheme.Muted;font-family:Arial,Helvetica,sans-serif;color:@EmailTheme.Foreground;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:@EmailTheme.Muted;padding:24px 0;">
+<body>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-wrapper">
         <tr>
             <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background-color:@EmailTheme.Background;border:1px solid @EmailTheme.Border;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="email-card">
                     <!-- Branding header -->
                     <tr>
-                        <td style="background-color:@Model.PrimaryColor;padding:24px 32px;" align="left">
+                        <td class="email-header brand-bg" align="left">
                             @if (!string.IsNullOrEmpty(Model.LogoUrl))
                             {
                                 <img src="@Model.LogoUrl" alt="@Model.CompanyName" height="32" style="height:32px;display:block;border:0;" />
                             }
                             else
                             {
-                                <span style="color:@EmailTheme.PrimaryForeground;font-size:20px;font-weight:bold;">@Model.CompanyName</span>
+                                <span class="email-header-title brand-fg">@Model.CompanyName</span>
                             }
                         </td>
                     </tr>
 
                     <!-- Body -->
                     <tr>
-                        <td style="padding:32px;font-size:15px;line-height:1.6;color:@EmailTheme.Foreground;">
+                        <td class="email-body">
                             @RenderBody()
                         </td>
                     </tr>
 
                     <!-- Footer -->
                     <tr>
-                        <td style="padding:20px 32px;border-top:1px solid @EmailTheme.Border;font-size:12px;color:@EmailTheme.MutedForeground;">
+                        <td class="email-footer">
                             &copy; @DateTime.UtcNow.Year @Model.CompanyName. This is an automated message, please do not reply.
                         </td>
                     </tr>

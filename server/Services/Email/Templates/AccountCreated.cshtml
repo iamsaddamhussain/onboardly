@@ -1,42 +1,36 @@
-@using Onboardly.Server.Services.Email
 @using Onboardly.Server.Services.Email.Models
 @model AccountCreatedEmailModel
 @{
     Layout = "_Layout";
 }
 
-<h1 style="margin:0 0 16px;font-size:22px;color:@EmailTheme.Foreground;">Welcome, @Model.UserName!</h1>
+<h1 class="email-h1">Welcome, @Model.UserName!</h1>
 
-<p style="margin:0 0 16px;">
+<p class="email-p">
     An account has been created for you at
     <strong>@Model.OrganizationName</strong>. You can now sign in and get started.
 </p>
 
 @if (!string.IsNullOrEmpty(Model.TemporaryPassword))
 {
-    <p style="margin:0 0 8px;">Use the temporary password below to sign in, then change it from your profile:</p>
-    <p style="margin:0 0 20px;">
-        <span style="display:inline-block;padding:10px 16px;background-color:@EmailTheme.Muted;border:1px solid @EmailTheme.Border;font-family:monospace;font-size:15px;">
-            @Model.TemporaryPassword
-        </span>
+    <p class="email-p">Use the temporary password below to sign in, then change it from your profile:</p>
+    <p class="email-note">
+        <span class="email-code">@Model.TemporaryPassword</span>
     </p>
 }
 else if (!string.IsNullOrEmpty(Model.PasswordSetupUrl))
 {
-    <p style="margin:0 0 20px;">
+    <p class="email-note">
         To finish setting up your account, please set your password:
-        <a href="@Model.PasswordSetupUrl" style="color:@Model.PrimaryColor;">Set your password</a>.
+        <a href="@Model.PasswordSetupUrl" class="brand-link">Set your password</a>.
     </p>
 }
 
 <p style="margin:24px 0;">
-    <a href="@Model.LoginUrl"
-       style="display:inline-block;padding:12px 24px;background-color:@Model.PrimaryColor;color:@EmailTheme.PrimaryForeground;text-decoration:none;font-weight:bold;">
-        Sign in
-    </a>
+    <a href="@Model.LoginUrl" class="email-button brand-bg brand-fg">Sign in</a>
 </p>
 
-<p style="margin:0;font-size:13px;color:@EmailTheme.MutedForeground;">
+<p class="email-muted">
     If the button doesn't work, copy and paste this link into your browser:<br />
-    <a href="@Model.LoginUrl" style="color:@Model.PrimaryColor;">@Model.LoginUrl</a>
+    <a href="@Model.LoginUrl" class="brand-link">@Model.LoginUrl</a>
 </p>
