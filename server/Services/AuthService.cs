@@ -17,21 +17,6 @@ public class AuthService : IAuthService
         _hasher = hasher;
     }
 
-    public async Task<User?> RegisterAsync(string email, string password)
-    {
-        email = email.Trim().ToLowerInvariant();
-
-        if (await _db.Users.AnyAsync(u => u.Email == email))
-            return null; // email already taken
-
-        var user = new User { Email = email };
-        user.PasswordHash = _hasher.HashPassword(user, password);
-
-        _db.Users.Add(user);
-        await _db.SaveChangesAsync();
-        return user;
-    }
-
     public async Task<User?> ValidateCredentialsAsync(string email, string password)
     {
         email = email.Trim().ToLowerInvariant();

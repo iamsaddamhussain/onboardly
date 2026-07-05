@@ -301,13 +301,6 @@ export const api = {
       } as RequestConfig)
       .then((r) => r.data),
 
-  register: (email: string, password: string) =>
-    http
-      .post<User>("/api/auth/register", { email, password }, {
-        skipAuthRedirect: true,
-      } as RequestConfig)
-      .then((r) => r.data),
-
   logout: () => http.post<void>("/api/auth/logout").then(() => undefined),
 
   // Guests legitimately get a 401 here on first load, so don't redirect/toast.

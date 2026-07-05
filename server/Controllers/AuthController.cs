@@ -27,23 +27,6 @@ public class AuthController : ControllerBase
         _session = session;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { message = "Email and password are required." });
-
-        if (request.Password.Length < 8)
-            return BadRequest(new { message = "Password must be at least 8 characters." });
-
-        var user = await _auth.RegisterAsync(request.Email, request.Password);
-        if (user is null)
-            return Conflict(new { message = "An account with that email already exists." });
-
-        await _session.SignInAsync(HttpContext, user);
-        return Ok(await _session.BuildResponseAsync(user, impersonating: false));
-    }
-
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
