@@ -82,13 +82,9 @@ export default function ProfilePage() {
     try {
       await mutation.mutateAsync(form)
     } catch (err) {
-      if (err instanceof ApiError && err.errors) {
-        const fieldErrors: Record<string, string> = {}
-        for (const [field, messages] of Object.entries(err.errors)) {
-          fieldErrors[field] = messages[0]
-        }
-        setErrors(fieldErrors)
-      }
+      // The interceptor already toasted/normalised the error; here we just
+      // surface field validation messages inline.
+      if (err instanceof ApiError) setErrors(err.fieldErrors)
     }
   }
 

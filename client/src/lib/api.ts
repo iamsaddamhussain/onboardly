@@ -22,11 +22,20 @@ export class ApiError extends Error {
   // Per-field validation messages (camelCase keys), when the server returns a
   // ValidationProblemDetails response.
   errors?: Record<string, string[]>
+  // Flattened first-message-per-field map, ready to drop into a form's field
+  // error state (so callers don't repeat the Object.entries reduce).
+  fieldErrors: Record<string, string>
   constructor(status: number, message: string, errors?: Record<string, string[]>) {
     super(message)
     this.name = "ApiError"
     this.status = status
     this.errors = errors
+    this.fieldErrors = {}
+    if (errors) {
+      for (const [field, messages] of Object.entries(errors)) {
+        if (messages?.length) this.fieldErrors[field] = messages[0]
+      }
+    }
   }
 }
 
