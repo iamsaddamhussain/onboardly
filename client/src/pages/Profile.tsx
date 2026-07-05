@@ -5,10 +5,9 @@ import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
+import { FormInput } from "@/components/FormInput"
 import { Timeline } from "@/components/Timeline"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { AppButton } from "@/components/AppButton"
 import { Card } from "@/components/ui/card"
 import { useResource, useResourceMutation } from "@/lib/query"
 import { api, ApiError, type AuditLogEntry, type Profile } from "@/lib/api"
@@ -128,96 +127,66 @@ export default function ProfilePage() {
 
         <FormSection title={t("profile.basicDetails")} icon={IdCard}>
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="firstName">{t("profile.firstName")}</Label>
-              <Input
-                id="firstName"
-                className="rounded-none"
-                value={form.firstName}
-                onChange={(e) => update("firstName", e.target.value)}
-                aria-invalid={!!errors.firstName}
-              />
-              {errors.firstName && (
-                <p className="text-xs text-destructive">{errors.firstName}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lastName">{t("profile.lastName")}</Label>
-              <Input
-                id="lastName"
-                className="rounded-none"
-                value={form.lastName}
-                onChange={(e) => update("lastName", e.target.value)}
-                aria-invalid={!!errors.lastName}
-              />
-              {errors.lastName && (
-                <p className="text-xs text-destructive">{errors.lastName}</p>
-              )}
-            </div>
+            <FormInput
+              id="firstName"
+              label={t("profile.firstName")}
+              value={form.firstName}
+              onValueChange={(v) => update("firstName", (v as string) ?? "")}
+              error={errors.firstName}
+            />
+            <FormInput
+              id="lastName"
+              label={t("profile.lastName")}
+              value={form.lastName}
+              onValueChange={(v) => update("lastName", (v as string) ?? "")}
+              error={errors.lastName}
+            />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">{t("profile.email")}</Label>
-            <Input
-              id="email"
-              className="rounded-none"
-              value={profile?.email ?? ""}
-              disabled
-              readOnly
-            />
-            <p className="text-xs text-muted-foreground">
-              {t("profile.emailHint")}
-            </p>
-          </div>
+          <FormInput
+            id="email"
+            label={t("profile.email")}
+            value={profile?.email ?? ""}
+            onValueChange={() => {}}
+            disabled
+            readOnly
+            hint={t("profile.emailHint")}
+          />
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="mobile">{t("profile.mobile")}</Label>
-              <Input
-                id="mobile"
-                className="rounded-none"
-                value={form.mobile}
-                onChange={(e) => update("mobile", e.target.value)}
-                aria-invalid={!!errors.mobile}
-              />
-              {errors.mobile && (
-                <p className="text-xs text-destructive">{errors.mobile}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="city">{t("profile.city")}</Label>
-              <Input
-                id="city"
-                className="rounded-none"
-                value={form.city}
-                onChange={(e) => update("city", e.target.value)}
-                aria-invalid={!!errors.city}
-              />
-              {errors.city && (
-                <p className="text-xs text-destructive">{errors.city}</p>
-              )}
-            </div>
+            <FormInput
+              id="mobile"
+              label={t("profile.mobile")}
+              value={form.mobile}
+              onValueChange={(v) => update("mobile", (v as string) ?? "")}
+              error={errors.mobile}
+            />
+            <FormInput
+              id="city"
+              label={t("profile.city")}
+              value={form.city}
+              onValueChange={(v) => update("city", (v as string) ?? "")}
+              error={errors.city}
+            />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="jobTitle">{t("profile.jobTitle")}</Label>
-            <Input
-              id="jobTitle"
-              className="rounded-none"
-              value={form.jobTitle}
-              onChange={(e) => update("jobTitle", e.target.value)}
-              aria-invalid={!!errors.jobTitle}
-            />
-            {errors.jobTitle && (
-              <p className="text-xs text-destructive">{errors.jobTitle}</p>
-            )}
-          </div>
+          <FormInput
+            id="jobTitle"
+            label={t("profile.jobTitle")}
+            value={form.jobTitle}
+            onValueChange={(v) => update("jobTitle", (v as string) ?? "")}
+            error={errors.jobTitle}
+          />
         </FormSection>
 
         <div className="flex justify-end">
-          <Button type="submit" className="rounded-none" disabled={saving}>
-            {saving ? t("profile.saving") : t("profile.saveChanges")}
-          </Button>
+          <AppButton
+            type="submit"
+            loading={saving}
+            loadingText={t("profile.saving")}
+          >
+            {t("profile.saveChanges")}
+          </AppButton>
         </div>
       </form>
 

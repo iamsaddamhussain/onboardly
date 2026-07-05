@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { AppButton } from "@/components/AppButton"
+import { ActionButton } from "@/components/ActionButton"
+import { FormInput } from "@/components/FormInput"
 import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { api } from "@/lib/api"
@@ -78,25 +78,25 @@ export default function RolesPage() {
     >
       <div className="flex flex-col gap-4">
         <Card className="gap-3 rounded-none p-5 sm:max-w-md">
-          <Label htmlFor="newRole">{t("roles.newRole")}</Label>
-          <div className="flex gap-2">
-            <Input
-              id="newRole"
-              className="rounded-none"
-              placeholder={t("roles.newRolePlaceholder")}
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value)}
-            />
-            <Button
-              className="rounded-none"
-              disabled={!newRole.trim()}
-              onClick={() =>
-                createRole.mutate(newRole.trim(), { onSuccess: () => setNewRole("") })
-              }
-            >
-              <Plus /> {t("roles.add")}
-            </Button>
-          </div>
+          <FormInput
+            id="newRole"
+            label={t("roles.newRole")}
+            placeholder={t("roles.newRolePlaceholder")}
+            value={newRole}
+            onValueChange={(v) => setNewRole((v as string) ?? "")}
+            append={
+              <AppButton
+                icon={Plus}
+                loading={createRole.isPending}
+                disabled={!newRole.trim()}
+                onClick={() =>
+                  createRole.mutate(newRole.trim(), { onSuccess: () => setNewRole("") })
+                }
+              >
+                {t("roles.add")}
+              </AppButton>
+            }
+          />
         </Card>
 
         {data?.roles.map((role) => (
@@ -109,14 +109,13 @@ export default function RolesPage() {
                 </p>
               </div>
               {role.editable && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-none text-destructive"
+                <ActionButton
+                  tone="destructive"
+                  icon={Trash2}
                   onClick={() => setDeleteRole(role)}
                 >
-                  <Trash2 /> {t("common.delete")}
-                </Button>
+                  {t("common.delete")}
+                </ActionButton>
               )}
             </div>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

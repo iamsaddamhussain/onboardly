@@ -5,9 +5,10 @@ import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
+import { FormInput } from "@/components/FormInput"
+import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { AppButton } from "@/components/AppButton"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -210,153 +211,103 @@ export default function UserFormPage() {
       actions={
         <div className="flex gap-2">
           {canImpersonateUser && (
-            <Button
+            <AppButton
               variant="outline"
-              className="cursor-pointer rounded-none text-primary hover:text-primary"
+              className="cursor-pointer text-primary hover:text-primary"
+              icon={LogIn}
               onClick={handleImpersonate}
             >
-              <LogIn /> {t("userForm.loginToImpersonate")}
-            </Button>
+              {t("userForm.loginToImpersonate")}
+            </AppButton>
           )}
-          <Button
-            variant="outline"
-            className="rounded-none"
-            onClick={requestLeave}
-          >
-            <ArrowLeft /> {t("common.back")}
-          </Button>
+          <AppButton variant="outline" icon={ArrowLeft} onClick={requestLeave}>
+            {t("common.back")}
+          </AppButton>
         </div>
       }
     >
       <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-4">
         <FormSection title={t("userForm.basicDetails")} icon={IdCard}>
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="firstName">{t("userForm.firstName")}</Label>
-              <Input
-                id="firstName"
-                className="rounded-none"
-                value={form.firstName}
-                onChange={(e) => update("firstName", e.target.value)}
-                aria-invalid={!!errors.firstName}
-              />
-              {errors.firstName && (
-                <p className="text-xs text-destructive">{errors.firstName}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lastName">{t("userForm.lastName")}</Label>
-              <Input
-                id="lastName"
-                className="rounded-none"
-                value={form.lastName}
-                onChange={(e) => update("lastName", e.target.value)}
-                aria-invalid={!!errors.lastName}
-              />
-              {errors.lastName && (
-                <p className="text-xs text-destructive">{errors.lastName}</p>
-              )}
-            </div>
+            <FormInput
+              id="firstName"
+              label={t("userForm.firstName")}
+              required
+              value={form.firstName}
+              onValueChange={(v) => update("firstName", (v as string) ?? "")}
+              error={errors.firstName}
+            />
+            <FormInput
+              id="lastName"
+              label={t("userForm.lastName")}
+              required
+              value={form.lastName}
+              onValueChange={(v) => update("lastName", (v as string) ?? "")}
+              error={errors.lastName}
+            />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">{t("userForm.email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              className="rounded-none"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              aria-invalid={!!errors.email}
-            />
-            {errors.email && (
-              <p className="text-xs text-destructive">{errors.email}</p>
-            )}
-          </div>
+          <FormInput
+            id="email"
+            type="email"
+            label={t("userForm.email")}
+            required
+            value={form.email}
+            onValueChange={(v) => update("email", (v as string) ?? "")}
+            error={errors.email}
+          />
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">{t("userForm.password")}</Label>
-            <Input
-              id="password"
-              type="password"
-              className="rounded-none"
-              value={form.password}
-              onChange={(e) => update("password", e.target.value)}
-              aria-invalid={!!errors.password}
-            />
-            {errors.password ? (
-              <p className="text-xs text-destructive">{errors.password}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {editing
-                  ? t("userForm.passwordHintEdit")
-                  : t("userForm.passwordHintNew")}
-              </p>
-            )}
-          </div>
+          <FormInput
+            id="password"
+            type="password"
+            label={t("userForm.password")}
+            required={!editing}
+            value={form.password}
+            onValueChange={(v) => update("password", (v as string) ?? "")}
+            error={errors.password}
+            hint={editing ? t("userForm.passwordHintEdit") : t("userForm.passwordHintNew")}
+          />
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="mobile">{t("userForm.mobile")}</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                inputMode="numeric"
-                className="rounded-none"
-                value={form.mobile}
-                onChange={(e) => update("mobile", e.target.value.replace(/[^0-9]/g, ""))}
-                aria-invalid={!!errors.mobile}
-              />
-              {errors.mobile && (
-                <p className="text-xs text-destructive">{errors.mobile}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="city">{t("userForm.city")}</Label>
-              <Input
-                id="city"
-                className="rounded-none"
-                value={form.city}
-                onChange={(e) => update("city", e.target.value)}
-                aria-invalid={!!errors.city}
-              />
-              {errors.city && (
-                <p className="text-xs text-destructive">{errors.city}</p>
-              )}
-            </div>
+            <FormInput
+              id="mobile"
+              type="tel"
+              inputMode="numeric"
+              label={t("userForm.mobile")}
+              value={form.mobile}
+              onValueChange={(v) => update("mobile", (v as string) ?? "")}
+              transform={(raw) => raw.replace(/[^0-9]/g, "")}
+              error={errors.mobile}
+            />
+            <FormInput
+              id="city"
+              label={t("userForm.city")}
+              value={form.city}
+              onValueChange={(v) => update("city", (v as string) ?? "")}
+              error={errors.city}
+            />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="jobTitle">{t("userForm.jobTitle")}</Label>
-            <Input
-              id="jobTitle"
-              className="rounded-none"
-              value={form.jobTitle}
-              onChange={(e) => update("jobTitle", e.target.value)}
-              aria-invalid={!!errors.jobTitle}
-            />
-            {errors.jobTitle && (
-              <p className="text-xs text-destructive">{errors.jobTitle}</p>
-            )}
-          </div>
+          <FormInput
+            id="jobTitle"
+            label={t("userForm.jobTitle")}
+            value={form.jobTitle}
+            onValueChange={(v) => update("jobTitle", (v as string) ?? "")}
+            error={errors.jobTitle}
+          />
         </FormSection>
 
         <FormSection title={t("userForm.account")} icon={Settings2}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="language">{t("userForm.language")}</Label>
-            <select
-              id="language"
-              className="rounded-none border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              value={form.language}
-              onChange={(e) => update("language", e.target.value)}
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {t(`languages.${lang}`)}
-                </option>
-              ))}
-            </select>
-          </div>
+          <FormSelect
+            id="language"
+            label={t("userForm.language")}
+            value={form.language}
+            onValueChange={(v) => update("language", (v as string) ?? "en")}
+            options={SUPPORTED_LANGUAGES.map((lang) => ({
+              value: lang,
+              label: t(`languages.${lang}`),
+            }))}
+          />
           {canAssignOrg && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="organization">{t("userForm.organization")}</Label>
@@ -422,33 +373,26 @@ export default function UserFormPage() {
         )}
 
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-none"
-            onClick={requestLeave}
-          >
+          <AppButton type="button" variant="outline" onClick={requestLeave}>
             {t("userForm.cancel")}
-          </Button>
+          </AppButton>
           {canDelete && (
-            <Button
+            <AppButton
               type="button"
               variant="destructive"
-              className="rounded-none"
+              icon={Trash2}
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 /> {t("userForm.delete")}
-            </Button>
+              {t("userForm.delete")}
+            </AppButton>
           )}
-          <Button type="submit" className="rounded-none" disabled={saving}>
-            {saving
-              ? editing
-                ? t("userForm.saving")
-                : t("userForm.creating")
-              : editing
-                ? t("userForm.saveChanges")
-                : t("userForm.createUser")}
-          </Button>
+          <AppButton
+            type="submit"
+            loading={saving}
+            loadingText={editing ? t("userForm.saving") : t("userForm.creating")}
+          >
+            {editing ? t("userForm.saveChanges") : t("userForm.createUser")}
+          </AppButton>
         </div>
       </form>
 

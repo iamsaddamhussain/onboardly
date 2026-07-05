@@ -1,11 +1,12 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useMemo } from "react"
 import { LogIn, Pencil, Plus, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { TFunction } from "i18next"
 
 import { Page } from "@/components/Page"
-import { Button } from "@/components/ui/button"
+import { AppButton } from "@/components/AppButton"
+import { ActionButton } from "@/components/ActionButton"
 import { DataTable } from "@/components/datatable/DataTable"
 import { column } from "@/components/datatable/column"
 import { useResource } from "@/lib/query"
@@ -124,25 +125,17 @@ function buildColumns(
       .render((_, row) => (
         <div className="flex items-center justify-end">
           {options.canImpersonate && row.id !== options.currentUserId && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="cursor-pointer rounded-none text-primary hover:bg-primary/10 hover:text-primary"
+            <ActionButton
+              tone="primary"
+              icon={LogIn}
               onClick={() => options.onImpersonate(row)}
             >
-              <LogIn /> {t("users.impersonate")}
-            </Button>
+              {t("users.impersonate")}
+            </ActionButton>
           )}
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="cursor-pointer rounded-none"
-          >
-            <Link to={`/users/${row.id}/edit`}>
-              <Pencil /> {t("users.edit")}
-            </Link>
-          </Button>
+          <ActionButton to={`/users/${row.id}/edit`} icon={Pencil}>
+            {t("users.edit")}
+          </ActionButton>
         </div>
       )),
   ]
@@ -193,9 +186,9 @@ export default function UsersPage() {
         { label: t("nav.users") },
       ]}
       actions={
-        <Button className="rounded-none" onClick={() => navigate("/users/new")}>
-          <Plus /> {t("users.newUser")}
-        </Button>
+        <AppButton icon={Plus} onClick={() => navigate("/users/new")}>
+          {t("users.newUser")}
+        </AppButton>
       }
     >
       <DataTable<ManagedUser>

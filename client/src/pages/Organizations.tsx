@@ -5,7 +5,8 @@ import type { TFunction } from "i18next"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { AppButton } from "@/components/AppButton"
+import { ActionButton } from "@/components/ActionButton"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DataTable } from "@/components/datatable/DataTable"
@@ -61,16 +62,13 @@ function buildColumns(
       .right()
       .render((_, row) => (
         <div className="flex items-center justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
+          <ActionButton
             disabled={toggling}
-            className="cursor-pointer rounded-none"
+            icon={row.isActive ? PowerOff : Power}
             onClick={() => onToggle(row)}
           >
-            {row.isActive ? <PowerOff /> : <Power />}
             {row.isActive ? t("organizations.deactivate") : t("organizations.activate")}
-          </Button>
+          </ActionButton>
         </div>
       )),
   ]
@@ -142,13 +140,14 @@ export default function OrganizationsPage() {
               value={tier}
               onChange={(e) => setTier(e.target.value)}
             />
-            <Button
-              className="rounded-none"
-              disabled={!name.trim() || createOrganization.isPending}
+            <AppButton
+              icon={Plus}
+              loading={createOrganization.isPending}
+              disabled={!name.trim()}
               onClick={handleCreate}
             >
-              <Plus /> {t("organizations.add")}
-            </Button>
+              {t("organizations.add")}
+            </AppButton>
           </div>
         </Card>
 

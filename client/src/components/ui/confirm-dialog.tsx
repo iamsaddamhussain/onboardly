@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 
-import { Button } from "@/components/ui/button"
+import { AppButton } from "@/components/AppButton"
 
 interface ConfirmDialogProps {
   open: boolean
@@ -57,17 +57,16 @@ export function ConfirmDialog({
           <p className="mt-2 text-sm text-muted-foreground">{description}</p>
         )}
         <div className="mt-6 flex justify-end gap-2">
-          <Button variant="ghost" className="rounded-none" onClick={onCancel}>
+          <AppButton variant="ghost" onClick={onCancel}>
             {cancelLabel}
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             variant={destructive ? "destructive" : "default"}
-            className="rounded-none"
             onClick={onConfirm}
             autoFocus
           >
             {confirmLabel}
-          </Button>
+          </AppButton>
         </div>
       </div>
     </div>,

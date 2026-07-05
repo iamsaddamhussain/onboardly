@@ -4,9 +4,8 @@ import { ListTodo } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { AppButton } from "@/components/AppButton"
+import { FormInput } from "@/components/FormInput"
 import {
   Card,
   CardContent,
@@ -114,39 +113,34 @@ export default function LoginPage() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="flex flex-col gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">{t("login.email")}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="rounded-none"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">{t("login.password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="rounded-none"
-                />
-              </div>
+              <FormInput
+                id="email"
+                type="email"
+                autoComplete="username"
+                label={t("login.email")}
+                value={email}
+                onValueChange={(v) => setEmail((v as string) ?? "")}
+                required
+              />
+              <FormInput
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                label={t("login.password")}
+                value={password}
+                onValueChange={(v) => setPassword((v as string) ?? "")}
+                required
+              />
             </CardContent>
             <CardFooter className="mt-6 flex flex-col gap-4">
-              <Button
+              <AppButton
                 type="submit"
-                className="w-full rounded-none"
-                disabled={submitting}
+                className="w-full"
+                loading={submitting}
+                loadingText={t("login.signingIn")}
               >
-                {submitting ? t("login.signingIn") : t("login.signIn")}
-              </Button>
+                {t("login.signIn")}
+              </AppButton>
 
               <div className="flex w-full items-center gap-3">
                 <span className="h-px flex-1 bg-border" />
@@ -157,22 +151,20 @@ export default function LoginPage() {
               </div>
 
               <div className="grid w-full grid-cols-2 gap-3">
-                <Button
+                <AppButton
                   type="button"
                   variant="outline"
-                  className="rounded-none"
                   onClick={() => handleOAuth("Google")}
                 >
                   <GoogleIcon /> Google
-                </Button>
-                <Button
+                </AppButton>
+                <AppButton
                   type="button"
                   variant="outline"
-                  className="rounded-none"
                   onClick={() => handleOAuth("Microsoft")}
                 >
                   <MicrosoftIcon /> Microsoft
-                </Button>
+                </AppButton>
               </div>
             </CardFooter>
           </form>
