@@ -143,6 +143,17 @@
     "searching": "Recherche…",
     "noResults": "Aucun résultat trouvé."
   },
+  "errors": {
+    "network": "Impossible de joindre le serveur. Est-il en cours d'exécution ?",
+    "badRequest": "Cette requête semble invalide. Veuillez vérifier votre saisie.",
+    "unauthorized": "Votre session a expiré. Veuillez vous reconnecter.",
+    "forbidden": "Vous n'avez pas la permission de faire cela.",
+    "notFound": "Nous n'avons pas trouvé ce que vous cherchiez.",
+    "conflict": "Cela entre en conflit avec des données existantes.",
+    "unprocessable": "Certaines données soumises étaient invalides.",
+    "server": "Une erreur est survenue de notre côté. Veuillez réessayer.",
+    "generic": "Une erreur est survenue. Veuillez réessayer."
+  },
   "users": {
     "title": "Utilisateurs",
     "description": "Gérez les personnes de votre espace de travail.",

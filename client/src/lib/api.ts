@@ -15,6 +15,8 @@ import axios, {
 } from "axios"
 import { toast } from "sonner"
 
+import i18n from "@/lib/i18n"
+
 export class ApiError extends Error {
   status: number
   // Per-field validation messages (camelCase keys), when the server returns a
@@ -226,24 +228,24 @@ function messageFor(error: AxiosError<ApiErrorBody>): string {
   const status = error.response?.status
   const fromServer = error.response?.data?.message
   if (fromServer) return fromServer
-  if (error.code === "ERR_NETWORK") return "Cannot reach the server. Is it running?"
+  if (error.code === "ERR_NETWORK") return i18n.t("errors.network")
   switch (status) {
     case 400:
-      return "That request looks invalid. Please check your input."
+      return i18n.t("errors.badRequest")
     case 401:
-      return "Your session has expired. Please sign in again."
+      return i18n.t("errors.unauthorized")
     case 403:
-      return "You don't have permission to do that."
+      return i18n.t("errors.forbidden")
     case 404:
-      return "We couldn't find what you were looking for."
+      return i18n.t("errors.notFound")
     case 409:
-      return "That conflicts with existing data."
+      return i18n.t("errors.conflict")
     case 422:
-      return "Some of the submitted data was invalid."
+      return i18n.t("errors.unprocessable")
     default:
       return status && status >= 500
-        ? "Something went wrong on our end. Please try again."
-        : "Something went wrong. Please try again."
+        ? i18n.t("errors.server")
+        : i18n.t("errors.generic")
   }
 }
 

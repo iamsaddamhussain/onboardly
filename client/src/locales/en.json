@@ -143,6 +143,17 @@
     "searching": "Searching…",
     "noResults": "No results found."
   },
+  "errors": {
+    "network": "Cannot reach the server. Is it running?",
+    "badRequest": "That request looks invalid. Please check your input.",
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "forbidden": "You don't have permission to do that.",
+    "notFound": "We couldn't find what you were looking for.",
+    "conflict": "That conflicts with existing data.",
+    "unprocessable": "Some of the submitted data was invalid.",
+    "server": "Something went wrong on our end. Please try again.",
+    "generic": "Something went wrong. Please try again."
+  },
   "users": {
     "title": "Users",
     "description": "Manage the people in your workspace.",
