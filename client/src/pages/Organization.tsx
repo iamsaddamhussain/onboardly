@@ -3,18 +3,12 @@ import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
-import { Timeline } from "@/components/Timeline"
+import { TimelineCard } from "@/components/TimelineCard"
+import { Avatar } from "@/components/Avatar"
+import { StatusPill } from "@/components/StatusPill"
 import { useResource } from "@/lib/query"
 import { type OrganizationProfile } from "@/lib/api"
-import { cn } from "@/lib/utils"
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
+import { formatLongDate } from "@/lib/format"
 
 function InfoRow({
   icon: Icon,
@@ -56,20 +50,14 @@ export default function OrganizationPage() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <Card className="gap-5 rounded-none p-6">
             <div className="flex items-center gap-4">
-              <span className="flex size-14 items-center justify-center rounded-none bg-primary text-primary-foreground">
-                <Building2 className="size-7" />
-              </span>
+              <Avatar icon={Building2} className="size-14" iconClassName="size-7" />
               <div className="min-w-0">
                 <h2 className="truncate text-lg font-semibold">{data.name}</h2>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1.5 text-xs font-medium",
-                    data.isActive ? "text-emerald-500" : "text-muted-foreground",
-                  )}
-                >
-                  <span className={cn("size-2", data.isActive ? "bg-emerald-500" : "bg-muted-foreground/50")} />
-                  {data.isActive ? t("organizationProfile.active") : t("organizationProfile.inactive")}
-                </span>
+                <StatusPill
+                  active={data.isActive}
+                  activeLabel={t("organizationProfile.active")}
+                  inactiveLabel={t("organizationProfile.inactive")}
+                />
               </div>
             </div>
 
@@ -80,15 +68,16 @@ export default function OrganizationPage() {
               </InfoRow>
               <InfoRow icon={Users} label={t("organizationProfile.members")}>{data.userCount}</InfoRow>
               <InfoRow icon={CalendarDays} label={t("organizationProfile.created")}>
-                {formatDate(data.createdAt)}
+                {formatLongDate(data.createdAt)}
               </InfoRow>
             </div>
           </Card>
 
-          <Card className="gap-4 rounded-none p-6">
-            <h3 className="text-sm font-semibold">{t("organizationProfile.timeline")}</h3>
-            <Timeline entries={data.recentActivity} emptyLabel={t("organizationProfile.empty")} />
-          </Card>
+          <TimelineCard
+            title={t("organizationProfile.timeline")}
+            entries={data.recentActivity}
+            emptyLabel={t("organizationProfile.empty")}
+          />
         </div>
       )}
     </Page>

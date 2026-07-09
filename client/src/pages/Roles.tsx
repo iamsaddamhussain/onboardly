@@ -1,13 +1,14 @@
 import { useState } from "react"
 import { Plus, ShieldCheck, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { startCase } from "lodash-es"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
 import { AppButton } from "@/components/AppButton"
 import { ActionButton } from "@/components/ActionButton"
 import { FormInput } from "@/components/FormInput"
-import { Switch } from "@/components/ui/switch"
+import { ToggleList } from "@/components/ToggleList"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { api } from "@/lib/api"
 import { useResource, useResourceMutation } from "@/lib/query"
@@ -34,11 +35,6 @@ interface RoleSummary {
 interface RolesResponse {
   roles: RoleSummary[]
   permissions: PermissionItem[]
-}
-
-// Display snake_case names as "Title Case" while keeping the raw value for the API.
-function humanize(name: string) {
-  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export default function RolesPage() {
@@ -103,7 +99,7 @@ export default function RolesPage() {
           <Card key={role.id} className="gap-4 rounded-none p-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold">{humanize(role.name)}</h3>
+                <h3 className="text-sm font-semibold">{startCase(role.name)}</h3>
                 <p className="text-xs text-muted-foreground">
                   {t("roles.userCount", { count: role.userCount })}
                 </p>
@@ -118,18 +114,16 @@ export default function RolesPage() {
                 </ActionButton>
               )}
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {permissions.map((perm) => (
-                <label key={perm.id} className="flex items-center gap-2 text-sm">
-                  <Switch
-                    checked={role.permissionIds.includes(perm.id)}
-                    disabled={!role.editable || !hasPermission(perm.name)}
-                    onCheckedChange={() => togglePermission(role, perm.id)}
-                  />
-                  {humanize(perm.name)}
-                </label>
-              ))}
-            </div>
+            <ToggleList
+              className="lg:grid-cols-3"
+              items={permissions.map((perm) => ({
+                id: perm.id,
+                label: startCase(perm.name),
+                checked: role.permissionIds.includes(perm.id),
+                disabled: !role.editable || !hasPermission(perm.name),
+              }))}
+              onToggle={(id) => togglePermission(role, id as number)}
+            />
           </Card>
         ))}
       </div>

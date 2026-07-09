@@ -7,21 +7,15 @@ import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
 import { AppButton } from "@/components/AppButton"
 import { ActionButton } from "@/components/ActionButton"
-import { Input } from "@/components/ui/input"
+import { StatusPill } from "@/components/StatusPill"
+import { FormInput } from "@/components/FormInput"
 import { Label } from "@/components/ui/label"
 import { DataTable } from "@/components/datatable/DataTable"
 import { column } from "@/components/datatable/column"
 import { api, type OrganizationRow } from "@/lib/api"
 import { useResourceMutation } from "@/lib/query"
-import { cn } from "@/lib/utils"
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
-}
+import { formatDate } from "@/lib/format"
+import { optional } from "@/lib/utils"
 
 function buildColumns(
   t: TFunction,
@@ -47,15 +41,11 @@ function buildColumns(
     column<OrganizationRow>("isActive", t("organizations.columns.status"))
       .sortOn("status")
       .render((value) => (
-        <span
-          className={cn(
-            "inline-flex items-center gap-1.5 text-xs font-medium",
-            value ? "text-emerald-500" : "text-muted-foreground",
-          )}
-        >
-          <span className={cn("size-2", value ? "bg-emerald-500" : "bg-muted-foreground/50")} />
-          {value ? t("organizations.active") : t("organizations.inactive")}
-        </span>
+        <StatusPill
+          active={Boolean(value)}
+          activeLabel={t("organizations.active")}
+          inactiveLabel={t("organizations.inactive")}
+        />
       )),
     column<OrganizationRow>("id", t("organizations.columns.actions"))
       .unsortable()
@@ -94,10 +84,10 @@ export default function OrganizationsPage() {
   )
 
   function handleCreate() {
-    const trimmed = name.trim()
-    if (!trimmed) return
+    const name_ = name.trim()
+    if (!name_) return
     createOrganization.mutate(
-      { name: trimmed, subscriptionTier: tier.trim() || undefined },
+      { name: name_, subscriptionTier: optional(tier) },
       {
         onSuccess: () => {
           setName("")
@@ -127,18 +117,18 @@ export default function OrganizationsPage() {
         <Card className="gap-3 rounded-none p-5">
           <Label htmlFor="newOrg">{t("organizations.newOrganization")}</Label>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
+            <FormInput
               id="newOrg"
-              className="rounded-none"
+              className="flex-1"
               placeholder={t("organizations.namePlaceholder")}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onValueChange={(v) => setName((v as string) ?? "")}
             />
-            <Input
-              className="rounded-none sm:max-w-56"
+            <FormInput
+              className="sm:max-w-56"
               placeholder={t("organizations.tierPlaceholder")}
               value={tier}
-              onChange={(e) => setTier(e.target.value)}
+              onValueChange={(v) => setTier((v as string) ?? "")}
             />
             <AppButton
               icon={Plus}

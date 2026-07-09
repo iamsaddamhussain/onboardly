@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n client,server -c blue,green \"yarn dev:client\" \"yarn dev:server\"",
+    "dev": "yarn build:server && concurrently -k -n client,server -c blue,green \"yarn dev:client\" \"yarn dev:server\"",
+    "build:server": "dotnet build ../server/Onboardly.Server.csproj -nologo",
     "dev:client": "vite",
     "dev:server": "dotnet watch --project ../server/Onboardly.Server.csproj run",
     "build": "tsc -b && vite build",
@@ -20,7 +21,9 @@
     "axios": "^1.18.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dayjs": "^1.11.21",
     "i18next": "^26.3.4",
+    "lodash-es": "^4.18.1",
     "lucide-react": "^0.460.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -32,6 +35,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

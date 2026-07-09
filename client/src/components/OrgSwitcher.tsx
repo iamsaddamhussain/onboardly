@@ -54,23 +54,17 @@ export function OrgSwitcher() {
   async function loadOrganizations() {
     if (organizations.length > 0) return
     setLoading(true)
-    try {
-      setOrganizations(await api.listOrganizations())
-    } finally {
-      setLoading(false)
-    }
+    setOrganizations(await api.listOrganizations())
+    setLoading(false)
   }
 
   async function handleSelect(organizationId: number | null) {
     setBusy(true)
-    try {
-      if (organizationId === null) await stopSwitchOrganization()
-      else await switchOrganization(organizationId)
-      // Cached data is tenant-scoped; refetch everything for the new scope.
-      await queryClient.invalidateQueries()
-    } finally {
-      setBusy(false)
-    }
+    if (organizationId === null) await stopSwitchOrganization()
+    else await switchOrganization(organizationId)
+    // Cached data is tenant-scoped; refetch everything for the new scope.
+    await queryClient.invalidateQueries()
+    setBusy(false)
   }
 
   return (

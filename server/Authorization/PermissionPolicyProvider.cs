@@ -19,10 +19,11 @@ public class PermissionPolicyProvider : IAuthorizationPolicyProvider
     {
         if (policyName.StartsWith(RequirePermissionAttribute.Prefix, StringComparison.Ordinal))
         {
-            var permission = policyName[RequirePermissionAttribute.Prefix.Length..];
+            var permissions = policyName[RequirePermissionAttribute.Prefix.Length..]
+                .Split(RequirePermissionAttribute.Separator, StringSplitOptions.RemoveEmptyEntries);
             var policy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
-                .AddRequirements(new PermissionRequirement(permission))
+                .AddRequirements(new PermissionRequirement(permissions))
                 .Build();
             return Task.FromResult<AuthorizationPolicy?>(policy);
         }

@@ -2,12 +2,14 @@ import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowLeft, IdCard, LogIn, Settings2, ShieldCheck, Trash2, UserPen, UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { startCase } from "lodash-es"
 
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
 import { FormInput } from "@/components/FormInput"
 import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
+import { ToggleList } from "@/components/ToggleList"
 import { AppButton } from "@/components/AppButton"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -17,6 +19,7 @@ import { save, destroy } from "@/lib/resource"
 import { ApiError, api, type ManagedUser, type Organization } from "@/lib/api"
 import { useAuthStore } from "@/store/auth-store"
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n"
+import { optional, trimmed } from "@/lib/utils"
 
 const empty = {
   firstName: "",
@@ -116,14 +119,14 @@ export default function UserFormPage() {
   const mutation = useResourceMutation<ManagedUser, UserFormState>(
     (data) =>
       save<ManagedUser>("users", userId, {
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        email: data.email.trim(),
+        firstName: trimmed(data.firstName),
+        lastName: trimmed(data.lastName),
+        email: trimmed(data.email),
         // Only send a password when one was typed (required on create).
         password: data.password ? data.password : undefined,
-        mobile: data.mobile.trim() || undefined,
-        city: data.city.trim() || undefined,
-        jobTitle: data.jobTitle.trim() || undefined,
+        mobile: optional(data.mobile),
+        city: optional(data.city),
+        jobTitle: optional(data.jobTitle),
         language: data.language,
         isActive: data.isActive,
         // Only platform admins may set the organization; otherwise the server
@@ -347,23 +350,20 @@ export default function UserFormPage() {
             <p className="text-xs text-muted-foreground">
               {t("userForm.rolesHint")}
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {rolesData?.roles.map((role) => (
-                <label key={role.id} className="flex items-center gap-2 text-sm">
-                  <Switch
-                    checked={roleIds.includes(role.id)}
-                    onCheckedChange={(checked) =>
-                      setRoleIds((prev) =>
-                        checked
-                          ? [...prev, role.id]
-                          : prev.filter((r) => r !== role.id),
-                      )
-                    }
-                  />
-                  {role.name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                </label>
-              ))}
-            </div>
+            <ToggleList
+              items={(rolesData?.roles ?? []).map((role) => ({
+                id: role.id,
+                label: startCase(role.name),
+                checked: roleIds.includes(role.id),
+              }))}
+              onToggle={(id, checked) =>
+                setRoleIds((prev) =>
+                  checked
+                    ? [...prev, id as number]
+                    : prev.filter((r) => r !== id),
+                )
+              }
+            />
           </FormSection>
         )}
 

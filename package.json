@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "yarn build:server && concurrently -n server,client -c blue,green \"yarn dev:server\" \"yarn dev:client\"",
+    "dev": "concurrently -n server,client -c blue,green \"yarn dev:server\" \"yarn dev:client\"",
     "build:server": "dotnet build server/Onboardly.Server.csproj -nologo",
     "dev:server": "dotnet watch run --project server",
     "dev:client": "yarn --cwd client dev"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
-  }
+  },
+  "dependencies": {}
 }

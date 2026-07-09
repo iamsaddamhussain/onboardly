@@ -25,8 +25,9 @@ public static class AppClaims
 
 public class PermissionRequirement : IAuthorizationRequirement
 {
-    public string Permission { get; }
-    public PermissionRequirement(string permission) => Permission = permission;
+    // Access is granted when the user holds ANY one of these permissions.
+    public IReadOnlyList<string> Permissions { get; }
+    public PermissionRequirement(params string[] permissions) => Permissions = permissions;
 }
 
 public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
@@ -44,7 +45,7 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
         AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
         var hasPermission = context.User.Claims
-            .Any(c => c.Type == AppClaims.Permission && c.Value == requirement.Permission);
+            .Any(c => c.Type == AppClaims.Permission && requirement.Permissions.Contains(c.Value));
 
         if (hasPermission)
         {
@@ -56,8 +57,8 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
             var user = context.User.FindFirstValue(ClaimTypes.Email) ?? "anonymous";
             var path = _http.HttpContext?.Request.Path.Value ?? "?";
             _logger.LogWarning(
-                "Unauthorized access: user {User} lacks permission {Permission} for {Path}",
-                user, requirement.Permission, path);
+                "Unauthorized access: user {User} lacks any of permission(s) {Permissions} for {Path}",
+                user, string.Join(", ", requirement.Permissions), path);
         }
 
         return Task.CompletedTask;

@@ -7,7 +7,7 @@ namespace Onboardly.Server.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/dashboard")]
-public class DashboardController : ControllerBase
+public class DashboardController : ApiControllerBase
 {
     private readonly IDashboardRepository _dashboard;
 

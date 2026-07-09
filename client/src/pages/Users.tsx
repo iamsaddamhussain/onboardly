@@ -3,28 +3,19 @@ import { useMemo } from "react"
 import { LogIn, Pencil, Plus, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { TFunction } from "i18next"
+import { startCase } from "lodash-es"
 
 import { Page } from "@/components/Page"
 import { AppButton } from "@/components/AppButton"
 import { ActionButton } from "@/components/ActionButton"
+import { StatusPill } from "@/components/StatusPill"
+import { BadgeList } from "@/components/BadgeList"
 import { DataTable } from "@/components/datatable/DataTable"
 import { column } from "@/components/datatable/column"
 import { useResource } from "@/lib/query"
 import { type ManagedUser } from "@/lib/api"
 import { useAuthStore } from "@/store/auth-store"
-import { cn } from "@/lib/utils"
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
-}
-
-function roleLabel(name: string) {
-  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-}
+import { formatDate } from "@/lib/format"
 
 function buildColumns(
   t: TFunction,
@@ -37,66 +28,73 @@ function buildColumns(
     onImpersonate: (row: ManagedUser) => void
   },
 ) {
+  function renderStatus(value: unknown) {
+    return (
+      <StatusPill
+        active={Boolean(value)}
+        activeLabel={t("users.active")}
+        inactiveLabel={t("users.inactive")}
+      />
+    )
+  }
+
+  function renderName(_: unknown, row: ManagedUser) {
+    return (
+      <span className="font-medium">
+        {row.firstName} {row.lastName}
+      </span>
+    )
+  }
+
+  function renderRoles(_: unknown, row: ManagedUser) {
+    const names = row.roleIds
+      .map((rid) => options.rolesById.get(rid))
+      .filter((n): n is string => Boolean(n))
+      .map(startCase)
+    return (
+      <BadgeList
+        items={names}
+        empty={<span className="text-muted-foreground">{t("common.dash")}</span>}
+      />
+    )
+  }
+
+  function renderActions(_: unknown, row: ManagedUser) {
+    return (
+      <div className="flex items-center justify-end">
+        {options.canImpersonate && row.id !== options.currentUserId && (
+          <ActionButton
+            tone="primary"
+            icon={LogIn}
+            onClick={() => options.onImpersonate(row)}
+          >
+            {t("users.impersonate")}
+          </ActionButton>
+        )}
+        <ActionButton to={`/users/${row.id}/edit`} icon={Pencil}>
+          {t("users.edit")}
+        </ActionButton>
+      </div>
+    )
+  }
+
   return [
     column<ManagedUser>("isActive", t("users.columns.status"))
       .sortOn("status")
-      .render((value) => (
-        <span
-          className={cn(
-            "inline-flex items-center gap-1.5 text-xs font-medium",
-            value ? "text-emerald-500" : "text-muted-foreground",
-          )}
-        >
-          <span
-            className={cn(
-              "size-2",
-              value ? "bg-emerald-500" : "bg-muted-foreground/50",
-            )}
-          />
-          {value ? t("users.active") : t("users.inactive")}
-        </span>
-      )),
+      .render(renderStatus),
     column<ManagedUser>("name", t("users.columns.name"))
       .sortOn("name")
-      .render((_, row) => (
-        <span className="font-medium">
-          {row.firstName} {row.lastName}
-        </span>
-      )),
+      .render(renderName),
     column<ManagedUser>("email", t("users.columns.email")).muted(),
-    ...(options.showOrganization
-      ? [
-          column<ManagedUser>("organizationName", t("users.columns.organization"))
-            .unsortable()
-            .muted()
-            .format((value) => (value as string | null) ?? "—"),
-        ]
-      : []),
-    ...(options.showRoles
-      ? [
-          column<ManagedUser>("roleIds", t("users.columns.roles"))
-            .unsortable()
-            .render((_, row) => {
-              const names = row.roleIds
-                .map((rid) => options.rolesById.get(rid))
-                .filter((n): n is string => Boolean(n))
-              if (names.length === 0)
-                return <span className="text-muted-foreground">{t("common.dash")}</span>
-              return (
-                <div className="flex flex-wrap gap-1">
-                  {names.map((name) => (
-                    <span
-                      key={name}
-                      className="inline-flex items-center rounded-none bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                    >
-                      {roleLabel(name)}
-                    </span>
-                  ))}
-                </div>
-              )
-            }),
-        ]
-      : []),
+    column<ManagedUser>("organizationName", t("users.columns.organization"))
+      .when(options.showOrganization)
+      .unsortable()
+      .muted()
+      .format((value) => (value as string | null) ?? "—"),
+    column<ManagedUser>("roleIds", t("users.columns.roles"))
+      .when(options.showRoles)
+      .unsortable()
+      .render(renderRoles),
     column<ManagedUser>("city", t("users.columns.city"))
       .muted()
       .format((value) => (value as string | null) ?? "—"),
@@ -122,22 +120,7 @@ function buildColumns(
     column<ManagedUser>("id", t("users.columns.actions"))
       .unsortable()
       .right()
-      .render((_, row) => (
-        <div className="flex items-center justify-end">
-          {options.canImpersonate && row.id !== options.currentUserId && (
-            <ActionButton
-              tone="primary"
-              icon={LogIn}
-              onClick={() => options.onImpersonate(row)}
-            >
-              {t("users.impersonate")}
-            </ActionButton>
-          )}
-          <ActionButton to={`/users/${row.id}/edit`} icon={Pencil}>
-            {t("users.edit")}
-          </ActionButton>
-        </div>
-      )),
+      .render(renderActions),
   ]
 }
 

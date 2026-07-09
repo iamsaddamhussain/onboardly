@@ -8,7 +8,7 @@ namespace Onboardly.Server.Controllers;
 [ApiController]
 [RequirePermission(Permissions.ManagePermissions)]
 [Route("api/permissions")]
-public class PermissionsController : ControllerBase
+public class PermissionsController : ApiControllerBase
 {
     private readonly IPermissionRepository _permissions;
 

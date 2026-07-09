@@ -9,7 +9,7 @@ namespace Onboardly.Server.Controllers;
 [ApiController]
 [RequirePermission(Permissions.ManageRoles)]
 [Route("api/roles")]
-public class RolesController : ControllerBase
+public class RolesController : ApiControllerBase
 {
     private readonly IRoleRepository _roles;
     private readonly IPermissionRepository _permissions;
@@ -63,7 +63,6 @@ public class RolesController : ControllerBase
         // Privilege-escalation guard: a caller may only add or remove permissions
         // they personally hold. Permissions they lack stay untouched, so no one
         // can grant themselves (or strip from others) access beyond their own.
-        var actorPermissions = User.FindAll(AppClaims.Permission).Select(c => c.Value).ToHashSet();
         var allPermissions = await _permissions.GetAll();
         var currentIds = role.Permissions.Select(p => p.Id).ToHashSet();
         var requestedIds = request.PermissionIds.ToHashSet();
@@ -75,7 +74,7 @@ public class RolesController : ControllerBase
             var current = currentIds.Contains(permission.Id);
             if (wanted == current)
                 continue; // no change requested for this permission
-            if (!actorPermissions.Contains(permission.Name))
+            if (!Can(permission.Name))
                 continue; // caller can't toggle a permission they don't hold
             if (wanted)
                 finalIds.Add(permission.Id);

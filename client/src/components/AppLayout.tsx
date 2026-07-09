@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { ProfileMenu } from "@/components/ProfileMenu"
 import { OrgSwitcher } from "@/components/OrgSwitcher"
 import { ImpersonationBanner } from "@/components/ImpersonationBanner"
+import { Avatar } from "@/components/Avatar"
 import { useAuthStore } from "@/store/auth-store"
 import { cn } from "@/lib/utils"
 
@@ -76,9 +77,7 @@ export function AppLayout() {
         )}
       >
         <div className="flex h-14 items-center gap-3 border-b px-5">
-          <div className="flex size-9 items-center justify-center rounded-none bg-primary text-primary-foreground">
-            <ListTodo className="size-5" />
-          </div>
+          <Avatar icon={ListTodo} className="size-9" />
           <span className="text-lg font-semibold">{t("common.appName")}</span>
           <button
             type="button"

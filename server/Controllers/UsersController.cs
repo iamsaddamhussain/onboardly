@@ -14,7 +14,7 @@ namespace Onboardly.Server.Controllers;
 [ApiController]
 [RequirePermission(Permissions.ManageUsers)]
 [Route("api/users")]
-public class UsersController : ControllerBase
+public class UsersController : ApiControllerBase
 {
     private readonly IUserRepository _users;
     private readonly IUserAccessService _access;

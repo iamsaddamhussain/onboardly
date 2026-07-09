@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Avatar } from "@/components/Avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,9 +39,7 @@ export function ProfileMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="cursor-pointer gap-3 px-2 py-6 focus-visible:ring-0">
-          <span className="flex size-8 items-center justify-center rounded-none bg-primary text-xs font-medium text-primary-foreground">
-            <UserIcon className="size-4" />
-          </span>
+          <Avatar icon={UserIcon} className="size-8 text-xs" iconClassName="size-4" />
           <span className="max-w-[12rem] truncate text-sm font-medium">
             {user?.email}
           </span>

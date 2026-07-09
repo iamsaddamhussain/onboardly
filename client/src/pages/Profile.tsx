@@ -6,11 +6,14 @@ import { useTranslation } from "react-i18next"
 import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
 import { FormInput } from "@/components/FormInput"
-import { Timeline } from "@/components/Timeline"
+import { TimelineCard } from "@/components/TimelineCard"
+import { Avatar } from "@/components/Avatar"
 import { AppButton } from "@/components/AppButton"
 import { Card } from "@/components/ui/card"
 import { useResource, useResourceMutation } from "@/lib/query"
 import { api, ApiError, type AuditLogEntry, type Profile } from "@/lib/api"
+import { formatLongDate } from "@/lib/format"
+import { optional, trimmed } from "@/lib/utils"
 
 const empty = {
   firstName: "",
@@ -21,14 +24,6 @@ const empty = {
 }
 
 type ProfileFormState = typeof empty
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
 
 export default function ProfilePage() {
   const { t } = useTranslation()
@@ -52,11 +47,11 @@ export default function ProfilePage() {
   const mutation = useResourceMutation<Profile, ProfileFormState>(
     (data) =>
       api.updateProfile({
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        mobile: data.mobile.trim() || undefined,
-        city: data.city.trim() || undefined,
-        jobTitle: data.jobTitle.trim() || undefined,
+        firstName: trimmed(data.firstName),
+        lastName: trimmed(data.lastName),
+        mobile: optional(data.mobile),
+        city: optional(data.city),
+        jobTitle: optional(data.jobTitle),
       }),
     ["auth/profile"],
     { onSuccess: () => toast.success(t("toasts.profileUpdated")) },
@@ -102,10 +97,12 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-4">
         {/* Read-only summary header */}
         <Card className="flex-row items-center gap-4 rounded-none p-6">
-          <span className="flex size-14 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">
-            {(profile?.firstName?.[0] ?? "") + (profile?.lastName?.[0] ?? "") ||
-              "?"}
-          </span>
+          <Avatar
+            className="size-14 rounded-full text-lg"
+            initials={
+              (profile?.firstName?.[0] ?? "") + (profile?.lastName?.[0] ?? "")
+            }
+          />
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold">
               {profile ? `${profile.firstName} ${profile.lastName}` : "—"}
@@ -115,7 +112,7 @@ export default function ProfilePage() {
             </p>
             {profile && (
               <p className="text-xs text-muted-foreground">
-                {t("profile.memberSince", { date: formatDate(profile.createdAt) })}
+                {t("profile.memberSince", { date: formatLongDate(profile.createdAt) })}
               </p>
             )}
           </div>
@@ -187,10 +184,11 @@ export default function ProfilePage() {
       </form>
 
       <div className="mt-8 max-w-2xl">
-        <Card className="gap-4 rounded-none p-6">
-          <h3 className="text-sm font-semibold">{t("profile.activityTitle")}</h3>
-          <Timeline entries={activity ?? []} emptyLabel={t("profile.activityEmpty")} />
-        </Card>
+        <TimelineCard
+          title={t("profile.activityTitle")}
+          entries={activity ?? []}
+          emptyLabel={t("profile.activityEmpty")}
+        />
       </div>
     </Page>
   )

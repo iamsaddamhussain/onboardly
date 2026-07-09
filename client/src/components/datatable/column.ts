@@ -81,6 +81,12 @@ export class Column<Row = Record<string, unknown>> {
     return this
   }
 
+  /** Show this column only when `condition` is true (e.g. permission checks). */
+  when(condition: boolean): this {
+    this.visible = condition
+    return this
+  }
+
   /** Map the raw value to a display string/node. Receives (value, row). */
   format(fn: (value: unknown, row: Row) => ReactNode): this {
     this.formatter = fn
