@@ -38,6 +38,10 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IJobTitleRepository, JobTitleRepository>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<ICodeGenerator, CodeGenerator>();
 builder.Services.AddScoped<IUserAccessService, UserAccessService>();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddMemoryCache();
@@ -141,6 +145,11 @@ builder.Services.AddControllers(options =>
     options.ModelBinderProviders.Insert(0, new EntityModelBinderProvider());
 });
 
+// --- Razor Pages (server-side rendered public marketing website) ---
+// Only the marketing pages (/, /features, /pricing, /contact) are rendered by
+// Razor. The React SPA owns /login and every authenticated application route.
+builder.Services.AddRazorPages();
+
 // --- CORS for the Vite dev server (credentials required for cookies) ---
 // Origins come from configuration ("Cors:DevOrigins") so the dev port lives in
 // one place; falls back to the default Vite port if nothing is configured.
@@ -174,6 +183,10 @@ else
 {
     app.UseHttpsRedirection();
 }
+
+// Serve static assets (marketing stylesheet, images) from wwwroot.
+app.UseStaticFiles();
+app.UseRouting();
 app.UseAuthentication();
 // Resolve the active tenant from cookie claims before authorization/endpoints.
 app.UseMiddleware<TenantResolutionMiddleware>();
@@ -188,5 +201,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+// SSR marketing pages (Home / Features / Pricing / Contact).
+app.MapRazorPages();
 
 app.Run();

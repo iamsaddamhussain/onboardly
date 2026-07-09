@@ -1,0 +1,85 @@
+@page "/"
+@{
+    ViewData["Title"] = "Modern ERP for growing teams";
+    var clientBaseUrl = (Configuration["Client:BaseUrl"] ?? string.Empty).TrimEnd('/');
+    var loginUrl = $"{clientBaseUrl}/login";
+
+    var modules = new[]
+    {
+        ("👥", "Human Resources", "Employees, departments, job titles, org charts and onboarding workflows."),
+        ("🛡️", "Users & Access", "Multi-tenant users, roles, granular permissions and impersonation."),
+        ("📁", "Projects", "Plan, assign and track work across teams and clients."),
+        ("🧾", "Procurement", "Purchase requests, approvals and vendor management."),
+        ("📊", "Reporting", "Dashboards and insights across every module."),
+        ("🔐", "Security & Audit", "Full change history, audit trails and SSO-ready authentication."),
+    };
+}
+
+<section class="hero">
+    <div class="container hero-inner">
+        <span class="eyebrow">Multi-tenant ERP SaaS</span>
+        <h1 class="hero-title">Run your whole business<br />on one modern platform</h1>
+        <p class="hero-sub">
+            Onboardly brings HR, projects, procurement and reporting together in a fast,
+            secure ERP built for growing teams — with role-based access and full audit trails.
+        </p>
+        <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="@loginUrl">Get started free</a>
+            <a class="btn btn-outline btn-lg" href="/features">Explore features</a>
+        </div>
+        <p class="hero-note">No credit card required · Set up in minutes</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container overview">
+        <div class="section-head">
+            <h2>Everything your team needs, in one place</h2>
+            <p>Stop stitching together spreadsheets and disconnected tools. Onboardly unifies your operations with a single source of truth.</p>
+        </div>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h3>Unified data model</h3>
+                <p>Employees, projects and purchases live in one connected system — no more duplicate entry.</p>
+            </div>
+            <div class="overview-card">
+                <h3>Secure by design</h3>
+                <p>Organization-scoped roles and permissions keep every tenant's data isolated and safe.</p>
+            </div>
+            <div class="overview-card">
+                <h3>Built to scale</h3>
+                <p>From a 10-person startup to enterprise, Onboardly grows with you module by module.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="modules" class="section section-muted">
+    <div class="container">
+        <div class="section-head">
+            <h2>ERP modules</h2>
+            <p>Turn on what you need today, add more as you grow.</p>
+        </div>
+        <div class="module-grid">
+            @foreach (var (icon, name, desc) in modules)
+            {
+                <div class="module-card">
+                    <div class="module-icon">@icon</div>
+                    <h3>@name</h3>
+                    <p>@desc</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section cta-band">
+    <div class="container cta-inner">
+        <h2>Ready to modernize your operations?</h2>
+        <p>Join teams running smarter with Onboardly.</p>
+        <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="@loginUrl">Sign in</a>
+            <a class="btn btn-outline btn-lg" href="/pricing">View pricing</a>
+        </div>
+    </div>
+</section>

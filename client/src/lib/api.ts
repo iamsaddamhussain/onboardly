@@ -210,6 +210,110 @@ export interface PagedResult<T> {
   totalPages: number
 }
 
+// --- Human Resources module ---
+
+// The set of employment status/type values, kept in sync with the server enums.
+export const EMPLOYMENT_STATUSES = [
+  "Active",
+  "Probation",
+  "OnLeave",
+  "Suspended",
+  "Terminated",
+] as const
+export type EmploymentStatus = (typeof EMPLOYMENT_STATUSES)[number]
+
+export const EMPLOYMENT_TYPES = [
+  "FullTime",
+  "PartTime",
+  "Contract",
+  "Intern",
+  "Temporary",
+] as const
+export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number]
+
+export interface DepartmentRow {
+  id: number
+  name: string
+  code: string
+  description: string | null
+  parentDepartmentId: number | null
+  parentDepartmentName: string | null
+  managerEmployeeId: number | null
+  managerName: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface DepartmentLookup {
+  id: number
+  name: string
+  code: string
+}
+
+export interface JobTitleRow {
+  id: number
+  name: string
+  code: string
+  description: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface JobTitleLookup {
+  id: number
+  name: string
+  code: string
+}
+
+export interface EmployeeRow {
+  id: number
+  employeeNumber: string
+  userId: number
+  fullName: string
+  email: string
+  departmentId: number | null
+  departmentName: string | null
+  jobTitleId: number | null
+  jobTitleName: string | null
+  reportingManagerId: number | null
+  reportingManagerName: string | null
+  joiningDate: string
+  employmentStatus: EmploymentStatus
+  employmentType: EmploymentType
+  workEmail: string | null
+  workPhone: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface EmployeeDetail extends EmployeeRow {
+  notes: string | null
+}
+
+export interface EmployeeLookup {
+  id: number
+  employeeNumber: string
+  fullName: string
+}
+
+export interface AssignableUser {
+  id: number
+  fullName: string
+  email: string
+}
+
+// Filters accepted by the employees datatable (merged into the request params).
+export interface EmployeeFilters {
+  departmentId?: number
+  jobTitleId?: number
+  employmentStatus?: EmploymentStatus
+  reportingManagerId?: number
+  joiningDateFrom?: string
+  joiningDateTo?: string
+}
+
 // Per-request options understood by our interceptor.
 type RequestConfig = InternalAxiosRequestConfig & {
   // Skip the global redirect-to-login behaviour for an expected 401
@@ -378,4 +482,33 @@ export const api = {
     http.put(`/api/roles/${id}/permissions`, { permissionIds }).then(() => undefined),
   setUserRoles: (userId: number, roleIds: number[]) =>
     http.put(`/api/users/${userId}/roles`, { roleIds }).then(() => undefined),
+
+  // --- Human Resources: typeahead lookups ---
+  lookupDepartments: (search?: string, excludeId?: number) =>
+    http
+      .get<DepartmentLookup[]>("/api/departments/lookup", {
+        params: { search: search || undefined, excludeId },
+      })
+      .then((r) => r.data),
+
+  lookupJobTitles: (search?: string) =>
+    http
+      .get<JobTitleLookup[]>("/api/jobtitles/lookup", {
+        params: { search: search || undefined },
+      })
+      .then((r) => r.data),
+
+  lookupEmployees: (search?: string, excludeId?: number) =>
+    http
+      .get<EmployeeLookup[]>("/api/employees/lookup", {
+        params: { search: search || undefined, excludeId },
+      })
+      .then((r) => r.data),
+
+  lookupAssignableUsers: (search?: string, includeUserId?: number) =>
+    http
+      .get<AssignableUser[]>("/api/employees/assignable-users", {
+        params: { search: search || undefined, includeUserId },
+      })
+      .then((r) => r.data),
 }

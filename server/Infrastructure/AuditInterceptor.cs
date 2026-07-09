@@ -67,10 +67,16 @@ public class AuditInterceptor : SaveChangesInterceptor
             if (!ShouldAudit(entry))
                 continue;
 
+            // A soft delete is stored as an UPDATE (IsDeleted false -> true) but
+            // is semantically a deletion, so record it as such with the pre-delete
+            // snapshot for the audit trail.
+            var softDeleted = IsSoftDelete(entry);
+
             var (oldValues, newValues) = entry.State switch
             {
                 EntityState.Added => (null, Snapshot(entry, current: true)),
                 EntityState.Deleted => (Snapshot(entry, current: false), (Dictionary<string, object?>?)null),
+                EntityState.Modified when softDeleted => (Snapshot(entry, current: false), (Dictionary<string, object?>?)null),
                 EntityState.Modified => (
                     Snapshot(entry, current: false, changedOnly: true),
                     Snapshot(entry, current: true, changedOnly: true)),
@@ -79,7 +85,7 @@ public class AuditInterceptor : SaveChangesInterceptor
 
             pending.Add(new PendingAudit(
                 entry,
-                ActionFor(entry.State),
+                softDeleted ? "Delete" : ActionFor(entry.State),
                 entry.Metadata.ClrType.Name,
                 oldValues,
                 newValues));
@@ -145,6 +151,17 @@ public class AuditInterceptor : SaveChangesInterceptor
         if (entry.Metadata.IsPropertyBag)
             return false;
         return entry.Metadata.ClrType.Namespace == typeof(User).Namespace;
+    }
+
+    // True when a modification flips a soft-deletable entity's IsDeleted to true.
+    private static bool IsSoftDelete(EntityEntry entry)
+    {
+        if (entry.State != EntityState.Modified || entry.Entity is not ISoftDeletable)
+            return false;
+        var flag = entry.Property(nameof(ISoftDeletable.IsDeleted));
+        return flag.IsModified
+            && flag.OriginalValue is false
+            && flag.CurrentValue is true;
     }
 
     private static Dictionary<string, object?> Snapshot(

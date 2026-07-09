@@ -1,0 +1,59 @@
+@page "/features"
+@{
+    ViewData["Title"] = "Features";
+
+    var features = new[]
+    {
+        ("👥", "Human Resources", "Manage employees, departments and job titles with reporting hierarchies and soft-delete safety."),
+        ("🛡️", "Roles & Permissions", "Fine-grained, organization-scoped RBAC with system templates and custom roles."),
+        ("🏢", "Multi-tenancy", "Every organization's data is isolated with automatic tenant filtering and platform administration."),
+        ("🕵️", "Impersonation", "Platform administrators can securely impersonate users to provide support."),
+        ("🧾", "Audit & Change History", "Every create, update and delete is recorded with a complete, searchable audit trail."),
+        ("📊", "Dashboards & Reporting", "Real-time metrics and insights that adapt to each user's access."),
+        ("✉️", "Transactional Email", "Branded, templated emails with sync or queued delivery for reliability at scale."),
+        ("🔐", "SSO-ready Auth", "Cookie-based sessions today, ready for Microsoft Entra ID, Google and SAML tomorrow."),
+    };
+}
+
+<section class="page-hero">
+    <div class="container">
+        <span class="eyebrow">Features</span>
+        <h1>Powerful capabilities, thoughtfully designed</h1>
+        <p class="lede">Onboardly pairs a clean React application with a fast .NET core — giving you enterprise-grade features without the enterprise complexity.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="feature-grid">
+            @foreach (var (icon, name, desc) in features)
+            {
+                <div class="feature-card">
+                    <div class="module-icon">@icon</div>
+                    <h3>@name</h3>
+                    <p>@desc</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section section-muted">
+    <div class="container split">
+        <div class="split-text">
+            <h2>A hybrid architecture that stays fast</h2>
+            <p>Marketing pages are server-side rendered for speed and SEO, while the application itself is a snappy React SPA. You get the best of both worlds — great first impressions and a fluid product experience.</p>
+            <ul class="check-list">
+                <li>Server-rendered public website</li>
+                <li>React single-page application</li>
+                <li>Secure, cookie-based sessions</li>
+                <li>Queue-ready background processing</li>
+            </ul>
+        </div>
+        <div class="split-panel">
+            <div class="stat"><span class="stat-num">6+</span><span class="stat-label">ERP modules</span></div>
+            <div class="stat"><span class="stat-num">100%</span><span class="stat-label">Audited changes</span></div>
+            <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Tenants supported</span></div>
+        </div>
+    </div>
+</section>

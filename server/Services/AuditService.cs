@@ -23,9 +23,10 @@ public interface IAuditService
 
     // Recent audit entries for a single user's timeline (their own activity).
     Task<IReadOnlyList<AuditLogListItem>> GetRecentForUserAsync(int userId, int take = 20);
-
-    // Recent audit entries for an organization's timeline (company activity).
     Task<IReadOnlyList<AuditLogListItem>> GetRecentForOrganizationAsync(int organizationId, int take = 20);
+
+    // Audit history for a specific entity instance (its own change timeline).
+    Task<IReadOnlyList<AuditLogListItem>> GetForEntityAsync(string entityType, string entityId, int take = 50);
 
     // Daily activity counts for a user's contribution heatmap (since a date).
     Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForUserAsync(int userId, DateTime since);
@@ -77,6 +78,9 @@ public class AuditService : IAuditService
 
     public async Task<IReadOnlyList<AuditLogListItem>> GetRecentForOrganizationAsync(int organizationId, int take = 20) =>
         await RecentQuery(_db.AuditLogs.Where(a => a.OrganizationId == organizationId), take);
+
+    public async Task<IReadOnlyList<AuditLogListItem>> GetForEntityAsync(string entityType, string entityId, int take = 50) =>
+        await RecentQuery(_db.AuditLogs.Where(a => a.EntityType == entityType && a.EntityId == entityId), take);
 
     public Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForUserAsync(int userId, DateTime since) =>
         HeatmapQuery(_db.AuditLogs.Where(a => a.UserId == userId), since);

@@ -13,6 +13,22 @@ public static class Permissions
     public const string ImpersonateUsers = "impersonate_users";
     public const string ViewAudit = "view_audit";
 
+    // --- Human Resources (organization-scoped) ---
+    public const string ViewEmployees = "employees.view";
+    public const string CreateEmployees = "employees.create";
+    public const string EditEmployees = "employees.edit";
+    public const string DeleteEmployees = "employees.delete";
+
+    public const string ViewDepartments = "departments.view";
+    public const string CreateDepartments = "departments.create";
+    public const string EditDepartments = "departments.edit";
+    public const string DeleteDepartments = "departments.delete";
+
+    public const string ViewJobTitles = "jobtitles.view";
+    public const string CreateJobTitles = "jobtitles.create";
+    public const string EditJobTitles = "jobtitles.edit";
+    public const string DeleteJobTitles = "jobtitles.delete";
+
     // --- Global (platform-level) permissions, not bound to any tenant ---
     public const string PlatformManageOrganizations = "platform.manage_organizations";
     public const string PlatformManageSubscriptions = "platform.manage_subscriptions";
@@ -29,6 +45,18 @@ public static class Permissions
         ManagePermissions,
         ImpersonateUsers,
         ViewAudit,
+        ViewEmployees,
+        CreateEmployees,
+        EditEmployees,
+        DeleteEmployees,
+        ViewDepartments,
+        CreateDepartments,
+        EditDepartments,
+        DeleteDepartments,
+        ViewJobTitles,
+        CreateJobTitles,
+        EditJobTitles,
+        DeleteJobTitles,
     };
 
     // Global/platform permissions (IsGlobal = true).

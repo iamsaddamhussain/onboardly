@@ -14,6 +14,13 @@ import OrganizationPage from "@/pages/Organization"
 import AuditLogPage from "@/pages/AuditLog"
 import ProfilePage from "@/pages/Profile"
 import SettingsPage from "@/pages/Settings"
+import EmployeesPage from "@/pages/hr/Employees"
+import EmployeeFormPage from "@/pages/hr/EmployeeForm"
+import EmployeeProfilePage from "@/pages/hr/EmployeeProfile"
+import DepartmentsPage from "@/pages/hr/Departments"
+import DepartmentFormPage from "@/pages/hr/DepartmentForm"
+import JobTitlesPage from "@/pages/hr/JobTitles"
+import JobTitleFormPage from "@/pages/hr/JobTitleForm"
 
 export default function App() {
   return (
@@ -88,6 +95,86 @@ export default function App() {
           element={
             <PermissionRoute permission={["view_audit", "platform.view_all_audits"]}>
               <AuditLogPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/employees"
+          element={
+            <PermissionRoute permission="employees.view">
+              <EmployeesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/employees/new"
+          element={
+            <PermissionRoute permission="employees.create">
+              <EmployeeFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/employees/:id"
+          element={
+            <PermissionRoute permission="employees.view">
+              <EmployeeProfilePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/employees/:id/edit"
+          element={
+            <PermissionRoute permission="employees.edit">
+              <EmployeeFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/departments"
+          element={
+            <PermissionRoute permission="departments.view">
+              <DepartmentsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/departments/new"
+          element={
+            <PermissionRoute permission="departments.create">
+              <DepartmentFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/departments/:id/edit"
+          element={
+            <PermissionRoute permission="departments.edit">
+              <DepartmentFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/job-titles"
+          element={
+            <PermissionRoute permission="jobtitles.view">
+              <JobTitlesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/job-titles/new"
+          element={
+            <PermissionRoute permission="jobtitles.create">
+              <JobTitleFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/job-titles/:id/edit"
+          element={
+            <PermissionRoute permission="jobtitles.edit">
+              <JobTitleFormPage />
             </PermissionRoute>
           }
         />

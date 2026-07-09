@@ -1,0 +1,66 @@
+@page "/pricing"
+@{
+    ViewData["Title"] = "Pricing";
+    var clientBaseUrl = (Configuration["Client:BaseUrl"] ?? string.Empty).TrimEnd('/');
+    var loginUrl = $"{clientBaseUrl}/login";
+}
+
+<section class="page-hero">
+    <div class="container">
+        <span class="eyebrow">Pricing</span>
+        <h1>Simple, transparent plans</h1>
+        <p class="lede">Start small and scale as you grow. Every plan includes secure multi-tenant access and audit trails.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="pricing-grid">
+            <!-- Starter -->
+            <div class="price-card">
+                <h3 class="price-name">Starter</h3>
+                <p class="price-desc">For small teams getting organized.</p>
+                <div class="price-amount"><span class="price-cur">$</span>0<span class="price-per">/mo</span></div>
+                <ul class="price-features">
+                    <li>Up to 10 users</li>
+                    <li>User Management</li>
+                    <li>Role &amp; Permission Management</li>
+                    <li>Basic Reporting</li>
+                </ul>
+                <a class="btn btn-outline btn-block" href="@loginUrl">Get started</a>
+            </div>
+
+            <!-- Professional -->
+            <div class="price-card price-card-featured">
+                <span class="price-badge">Most popular</span>
+                <h3 class="price-name">Professional</h3>
+                <p class="price-desc">For growing businesses that need more.</p>
+                <div class="price-amount"><span class="price-cur">$</span>49<span class="price-per">/mo</span></div>
+                <ul class="price-features">
+                    <li>Up to 100 users</li>
+                    <li>HR module</li>
+                    <li>Projects module</li>
+                    <li>Procurement module</li>
+                    <li>Standard Reporting</li>
+                </ul>
+                <a class="btn btn-primary btn-block" href="@loginUrl">Get started</a>
+            </div>
+
+            <!-- Enterprise -->
+            <div class="price-card">
+                <h3 class="price-name">Enterprise</h3>
+                <p class="price-desc">For organizations that need it all.</p>
+                <div class="price-amount price-amount-text">Custom</div>
+                <ul class="price-features">
+                    <li>Unlimited users</li>
+                    <li>All ERP modules</li>
+                    <li>SSO support</li>
+                    <li>Advanced Reporting</li>
+                    <li>Priority Support</li>
+                </ul>
+                <a class="btn btn-outline btn-block" href="/contact">Contact sales</a>
+            </div>
+        </div>
+        <p class="price-footnote">Prices shown are illustrative. No payment integration is required at this stage.</p>
+    </div>
+</section>

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using System.Reflection;
 using Onboardly.Server.Authorization;
 using Onboardly.Server.Models;
@@ -17,6 +18,11 @@ public class AppDbContext : DbContext
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    // --- Human Resources module ---
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<JobTitle> JobTitles => Set<JobTitle>();
+    public DbSet<Employee> Employees => Set<Employee>();
 
     public override int SaveChanges()
     {
@@ -39,6 +45,11 @@ public class AppDbContext : DbContext
                 entry.Entity.UpdatedAt = DateTime.UtcNow;
         }
 
+        // Keep HR aggregates' UpdatedAt fresh on every modification.
+        StampUpdatedAt<Department>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<JobTitle>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<Employee>(e => e.UpdatedAt = DateTime.UtcNow);
+
         // Stamp the active tenant onto new tenant-owned rows so callers never
         // have to set OrganizationId by hand (defense against cross-tenant writes).
         if (_tenant.OrganizationId is int orgId)
@@ -48,6 +59,16 @@ public class AppDbContext : DbContext
                 if (entry.State == EntityState.Added && entry.Entity.OrganizationId == 0)
                     entry.Entity.OrganizationId = orgId;
             }
+        }
+    }
+
+    // Applies an UpdatedAt stamp to every modified entity of the given type.
+    private void StampUpdatedAt<T>(Action<T> stamp) where T : class
+    {
+        foreach (var entry in ChangeTracker.Entries<T>())
+        {
+            if (entry.State == EntityState.Modified)
+                stamp(entry.Entity);
         }
     }
 
@@ -116,6 +137,8 @@ public class AppDbContext : DbContext
             entity.HasIndex(a => new { a.EntityType, a.EntityId });
         });
 
+        ConfigureHr(modelBuilder);
+
         // Auto-apply the tenant boundary filter to every tenant-owned entity so
         // reads can never leak across organizations by accident.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -134,7 +157,90 @@ public class AppDbContext : DbContext
     // everyone else is restricted to their active organization.
     private void ApplyTenantFilter<T>(ModelBuilder modelBuilder) where T : class, IOrgOwned
     {
-        modelBuilder.Entity<T>().HasQueryFilter(
-            e => _tenant.IgnoreTenantBoundary || e.OrganizationId == _tenant.OrganizationId);
+        Expression<Func<T, bool>> filter =
+            e => _tenant.IgnoreTenantBoundary || e.OrganizationId == _tenant.OrganizationId;
+
+        // Soft-deletable tenant entities additionally exclude deleted rows from
+        // every read. Compose `!IsDeleted` onto the tenant predicate reusing the
+        // same parameter so EF can translate the combined filter.
+        if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
+        {
+            var parameter = filter.Parameters[0];
+            var notDeleted = Expression.Equal(
+                Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted)),
+                Expression.Constant(false));
+            var body = Expression.AndAlso(filter.Body, notDeleted);
+            filter = Expression.Lambda<Func<T, bool>>(body, parameter);
+        }
+
+        modelBuilder.Entity<T>().HasQueryFilter(filter);
+    }
+
+    // Relational mapping for the Human Resources aggregates: tenant-unique codes,
+    // sensible string lengths, enum-as-string storage, and Restrict deletes so a
+    // referenced department/job-title/manager can't be orphaned. Cross-tenant
+    // isolation and soft-delete filtering are applied generically above.
+    private static void ConfigureHr(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.Property(d => d.Name).IsRequired().HasMaxLength(150);
+            entity.Property(d => d.Code).IsRequired().HasMaxLength(40);
+            entity.Property(d => d.Description).HasMaxLength(1000);
+            // Code is unique per tenant among live rows.
+            entity.HasIndex(d => new { d.OrganizationId, d.Code }).IsUnique();
+
+            entity.HasOne(d => d.ParentDepartment)
+                .WithMany(d => d.ChildDepartments)
+                .HasForeignKey(d => d.ParentDepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.Manager)
+                .WithMany()
+                .HasForeignKey(d => d.ManagerEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<JobTitle>(entity =>
+        {
+            entity.Property(j => j.Name).IsRequired().HasMaxLength(150);
+            entity.Property(j => j.Code).IsRequired().HasMaxLength(40);
+            entity.Property(j => j.Description).HasMaxLength(1000);
+            entity.HasIndex(j => new { j.OrganizationId, j.Code }).IsUnique();
+        });
+
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.Property(e => e.EmployeeNumber).IsRequired().HasMaxLength(40);
+            entity.Property(e => e.WorkEmail).HasMaxLength(256);
+            entity.Property(e => e.WorkPhone).HasMaxLength(40);
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+            entity.Property(e => e.EmploymentStatus).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.EmploymentType).HasConversion<string>().HasMaxLength(20);
+
+            entity.HasIndex(e => new { e.OrganizationId, e.EmployeeNumber }).IsUnique();
+            // One employee record per linked user account.
+            entity.HasIndex(e => e.UserId).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Department)
+                .WithMany()
+                .HasForeignKey(e => e.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.JobTitle)
+                .WithMany()
+                .HasForeignKey(e => e.JobTitleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ReportingManager)
+                .WithMany(e => e.DirectReports)
+                .HasForeignKey(e => e.ReportingManagerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }

@@ -1,0 +1,77 @@
+@{
+    // The React SPA owns /login. In production nginx serves it from the same
+    // origin, so a relative "/login" is correct. In development the SPA runs on
+    // a separate Vite port, configured via "Client:BaseUrl".
+    var clientBaseUrl = (Configuration["Client:BaseUrl"] ?? string.Empty).TrimEnd('/');
+    var loginUrl = $"{clientBaseUrl}/login";
+    var currentPath = ViewContext.HttpContext.Request.Path.Value ?? "/";
+    string NavActive(string path) => string.Equals(currentPath, path, StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
+    var title = ViewData["Title"] as string;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(string.IsNullOrEmpty(title) ? "Onboardly — Modern ERP for growing teams" : $"{title} · Onboardly")</title>
+    <meta name="description" content="Onboardly is a modern, multi-tenant ERP SaaS platform covering HR, projects, procurement and reporting." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="~/css/marketing.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container site-nav">
+            <a class="brand" href="/">
+                <span class="brand-mark">◆</span>
+                <span class="brand-name">Onboardly</span>
+            </a>
+            <nav class="nav-links">
+                <a class="@NavActive("/")" href="/">Home</a>
+                <a class="@NavActive("/features")" href="/features">Features</a>
+                <a class="@NavActive("/pricing")" href="/pricing">Pricing</a>
+                <a class="@NavActive("/contact")" href="/contact">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <a class="btn btn-ghost" href="@loginUrl">Sign in</a>
+                <a class="btn btn-primary" href="@loginUrl">Get started</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a class="brand" href="/">
+                    <span class="brand-mark">◆</span>
+                    <span class="brand-name">Onboardly</span>
+                </a>
+                <p class="footer-tag">The modern ERP platform for growing teams.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Product</h4>
+                <a href="/features">Features</a>
+                <a href="/pricing">Pricing</a>
+                <a href="@loginUrl">Sign in</a>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="/contact">Contact</a>
+                <a href="/#modules">Modules</a>
+            </div>
+            <div class="footer-col">
+                <h4>Get started</h4>
+                <a class="btn btn-primary btn-sm" href="@loginUrl">Sign in</a>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <span>&copy; @DateTime.UtcNow.Year Onboardly. All rights reserved.</span>
+        </div>
+    </footer>
+</body>
+</html>

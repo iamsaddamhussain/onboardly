@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Building2, History, LayoutDashboard, ListTodo, Menu, ShieldCheck, Users, X } from "lucide-react"
+import { Building2, History, LayoutDashboard, ListTodo, Menu, Network, ShieldCheck, UsersRound, Users, X, BriefcaseBusiness } from "lucide-react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -25,6 +25,14 @@ const navGroups: { labelKey: string | null; items: NavItem[] }[] = [
     items: [
       { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, permission: null },
       { to: "/organization", labelKey: "nav.organization", icon: Building2, permission: ["manage_users", "manage_roles", "platform.manage_organizations"], requiresOrgContext: true },
+    ],
+  },
+  {
+    labelKey: "nav.humanResources",
+    items: [
+      { to: "/employees", labelKey: "nav.employees", icon: UsersRound, permission: "employees.view", requiresOrgContext: true },
+      { to: "/departments", labelKey: "nav.departments", icon: Network, permission: "departments.view", requiresOrgContext: true },
+      { to: "/job-titles", labelKey: "nav.jobTitles", icon: BriefcaseBusiness, permission: "jobtitles.view", requiresOrgContext: true },
     ],
   },
   {

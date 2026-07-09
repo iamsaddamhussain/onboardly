@@ -6,10 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Onboardly.Server</RootNamespace>
     <!-- Email templates are embedded and rendered by RazorLight, not compiled as
-         MVC views, so disable the default Razor view compilation. -->
-    <EnableDefaultRazorGenerateItems>false</EnableDefaultRazorGenerateItems>
-    <!-- Required by RazorLight: preserves the compile-time reference assemblies in
-         the deps file so templates can be compiled at runtime. -->
+         MVC views. Marketing Razor Pages under Pages/ ARE compiled by the Razor
+         SDK; the email templates are explicitly removed from Razor compilation
+         below so they are only shipped as embedded resources. -->
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
@@ -34,6 +33,10 @@
     <Content Remove="Services\Email\Templates\**\*.css" />
     <None Remove="Services\Email\Templates\**\*.css" />
     <EmbeddedResource Include="Services\Email\Templates\**\*.css" />
+    <!-- Keep the email templates out of Razor SDK compilation (they are rendered
+         at runtime by RazorLight, not by MVC). -->
+    <RazorGenerate Remove="Services\Email\Templates\**\*.cshtml" />
+    <RazorCompile Remove="Services\Email\Templates\**\*.cshtml" />
   </ItemGroup>
 
 </Project>

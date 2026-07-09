@@ -1,0 +1,44 @@
+@page "/contact"
+@{
+    ViewData["Title"] = "Contact";
+}
+
+<section class="page-hero">
+    <div class="container">
+        <span class="eyebrow">Contact</span>
+        <h1>Let's talk</h1>
+        <p class="lede">Questions about Onboardly, pricing or a custom deployment? We'd love to hear from you.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container split">
+        <div class="split-text">
+            <h2>Get in touch</h2>
+            <p>Reach out and our team will get back to you within one business day.</p>
+            <ul class="contact-list">
+                <li><span class="contact-label">Email</span><a href="mailto:hello@onboardly.dev">hello@onboardly.dev</a></li>
+                <li><span class="contact-label">Sales</span><a href="mailto:sales@onboardly.dev">sales@onboardly.dev</a></li>
+                <li><span class="contact-label">Support</span><a href="mailto:support@onboardly.dev">support@onboardly.dev</a></li>
+            </ul>
+        </div>
+        <div class="split-panel contact-panel">
+            <form class="contact-form" method="post" action="/contact" onsubmit="return false;">
+                <div class="field">
+                    <label for="name">Name</label>
+                    <input id="name" name="name" type="text" placeholder="Jane Doe" required />
+                </div>
+                <div class="field">
+                    <label for="email">Work email</label>
+                    <input id="email" name="email" type="email" placeholder="jane@company.com" required />
+                </div>
+                <div class="field">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="4" placeholder="How can we help?" required></textarea>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">Send message</button>
+                <p class="form-note">This static form is a placeholder — no message is sent yet.</p>
+            </form>
+        </div>
+    </div>
+</section>
