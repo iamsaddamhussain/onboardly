@@ -24,6 +24,11 @@ public class AppDbContext : DbContext
     public DbSet<JobTitle> JobTitles => Set<JobTitle>();
     public DbSet<Employee> Employees => Set<Employee>();
 
+    // --- Attendance module ---
+    public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
+    public DbSet<AttendanceEvent> AttendanceEvents => Set<AttendanceEvent>();
+    public DbSet<AttendanceCorrection> AttendanceCorrections => Set<AttendanceCorrection>();
+
     public override int SaveChanges()
     {
         StampTimestamps();
@@ -49,6 +54,8 @@ public class AppDbContext : DbContext
         StampUpdatedAt<Department>(e => e.UpdatedAt = DateTime.UtcNow);
         StampUpdatedAt<JobTitle>(e => e.UpdatedAt = DateTime.UtcNow);
         StampUpdatedAt<Employee>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<AttendanceRecord>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<AttendanceCorrection>(e => e.UpdatedAt = DateTime.UtcNow);
 
         // Stamp the active tenant onto new tenant-owned rows so callers never
         // have to set OrganizationId by hand (defense against cross-tenant writes).
@@ -138,6 +145,7 @@ public class AppDbContext : DbContext
         });
 
         ConfigureHr(modelBuilder);
+        ConfigureAttendance(modelBuilder);
 
         // Auto-apply the tenant boundary filter to every tenant-owned entity so
         // reads can never leak across organizations by accident.
@@ -241,6 +249,59 @@ public class AppDbContext : DbContext
                 .WithMany(e => e.DirectReports)
                 .HasForeignKey(e => e.ReportingManagerId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    // Relational mapping for the Attendance aggregates: one record per employee
+    // per day, enum-as-string storage, and Restrict deletes so an employee with
+    // attendance history can't be orphaned. Tenant isolation and soft-delete
+    // filtering are applied generically by the query-filter loop.
+    private static void ConfigureAttendance(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AttendanceRecord>(entity =>
+        {
+            entity.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(a => a.Remarks).HasMaxLength(1000);
+            // At most one attendance row per employee per day within a tenant.
+            entity.HasIndex(a => new { a.OrganizationId, a.EmployeeId, a.Date }).IsUnique();
+            entity.HasIndex(a => new { a.OrganizationId, a.Date });
+
+            entity.HasOne(a => a.Employee)
+                .WithMany()
+                .HasForeignKey(a => a.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(a => a.Events)
+                .WithOne(e => e.AttendanceRecord)
+                .HasForeignKey(e => e.AttendanceRecordId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AttendanceEvent>(entity =>
+        {
+            entity.Property(e => e.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Source).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.HasIndex(e => new { e.OrganizationId, e.EmployeeId, e.OccurredAt });
+        });
+
+        modelBuilder.Entity<AttendanceCorrection>(entity =>
+        {
+            entity.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.RequestedStatus).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.Reason).IsRequired().HasMaxLength(1000);
+            entity.Property(c => c.ReviewNotes).HasMaxLength(1000);
+            entity.HasIndex(c => new { c.OrganizationId, c.Status });
+
+            entity.HasOne(c => c.Employee)
+                .WithMany()
+                .HasForeignKey(c => c.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(c => c.AttendanceRecord)
+                .WithMany()
+                .HasForeignKey(c => c.AttendanceRecordId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

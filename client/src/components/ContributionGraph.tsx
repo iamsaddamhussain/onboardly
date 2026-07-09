@@ -89,14 +89,19 @@ interface ContributionGraphProps {
   title: string
   points: ActivityHeatmapPoint[]
   className?: string
+  // When set, clicking a day toggles a selection and reports its YYYY-MM-DD key
+  // (or null when the same day is clicked again to clear).
+  onSelectDate?: (date: string | null) => void
+  selectedDate?: string | null
 }
 
 // A GitHub-style contribution heatmap card, sharing the "recent activity" role
 // with TimelineCard. Renders roughly a year of daily activity as a grid.
-export function ContributionGraph({ title, points, className }: ContributionGraphProps) {
+export function ContributionGraph({ title, points, className, onSelectDate, selectedDate }: ContributionGraphProps) {
   const { t, i18n } = useTranslation()
   const weeks = useMemo(() => buildWeeks(points), [points])
   const months = useMemo(() => monthLabels(weeks), [weeks])
+  const interactive = Boolean(onSelectDate)
 
   const total = points.reduce((sum, p) => sum + p.count, 0)
   // Weekday row labels (Mon/Wed/Fri) localised via dayjs.
@@ -143,8 +148,15 @@ export function ContributionGraph({ title, points, className }: ContributionGrap
               {weeks.map((week, wi) => (
                 <div key={wi} className="flex flex-col gap-0.75">
                   {week.map((cell) => (
-                    <div
+                    <button
                       key={cell.key}
+                      type="button"
+                      disabled={cell.count === null || !interactive}
+                      onClick={
+                        interactive && cell.count !== null
+                          ? () => onSelectDate?.(selectedDate === cell.key ? null : cell.key)
+                          : undefined
+                      }
                       title={
                         cell.count === null
                           ? undefined
@@ -156,6 +168,8 @@ export function ContributionGraph({ title, points, className }: ContributionGrap
                       className={cn(
                         "size-2.75 rounded-[2px]",
                         cell.count === null ? "bg-transparent" : LEVEL_CLASS[level(cell.count)],
+                        interactive && cell.count !== null && "cursor-pointer hover:ring-1 hover:ring-primary/50",
+                        selectedDate === cell.key && "ring-2 ring-primary ring-offset-1",
                       )}
                     />
                   ))}

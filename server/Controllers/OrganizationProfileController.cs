@@ -58,4 +58,17 @@ public class OrganizationProfileController : ApiControllerBase
         var points = await _audit.GetHeatmapForOrganizationAsync(organizationId, DateTime.UtcNow.AddDays(-371));
         return Ok(points);
     }
+
+    // Drill-down: the organization's audit entries on a specific calendar day,
+    // used when a heatmap cell is clicked to filter the activity timeline.
+    [HttpGet("activity")]
+    [RequirePermission(Permissions.ManageUsers, Permissions.ManageRoles, Permissions.PlatformManageOrganizations)]
+    public async Task<IActionResult> Activity([FromQuery] DateOnly date)
+    {
+        if (_tenant.OrganizationId is not int organizationId)
+            return NoContent();
+
+        var items = await _audit.GetForOrganizationOnDateAsync(organizationId, date);
+        return Ok(items);
+    }
 }

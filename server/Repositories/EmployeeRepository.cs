@@ -37,10 +37,19 @@ public class EmployeeRepository : IEmployeeRepository
             query = query.Where(e => e.EmploymentStatus == status);
         if (filter.ReportingManagerId is int managerId)
             query = query.Where(e => e.ReportingManagerId == managerId);
+        // Date-only bounds arrive Kind=Unspecified from the query string; Npgsql
+        // requires UTC for 'timestamp with time zone', so normalise the kind. The
+        // upper bound is made inclusive of the whole day.
         if (filter.JoiningDateFrom is DateTime from)
-            query = query.Where(e => e.JoiningDate >= from);
+        {
+            var fromUtc = DateTime.SpecifyKind(from.Date, DateTimeKind.Utc);
+            query = query.Where(e => e.JoiningDate >= fromUtc);
+        }
         if (filter.JoiningDateTo is DateTime to)
-            query = query.Where(e => e.JoiningDate <= to);
+        {
+            var toUtc = DateTime.SpecifyKind(to.Date, DateTimeKind.Utc).AddDays(1);
+            query = query.Where(e => e.JoiningDate < toUtc);
+        }
 
         return query
             .ToDataTable(request)
@@ -145,6 +154,9 @@ public class EmployeeRepository : IEmployeeRepository
 
     public Task<Employee?> GetByIdAsync(int id) =>
         _db.Employees.FirstOrDefaultAsync(e => e.Id == id);
+
+    public Task<Employee?> GetByUserIdAsync(int userId) =>
+        _db.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
 
     public Task<EmployeeDetail?> GetDetailAsync(int id) =>
         _db.Employees

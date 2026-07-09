@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Building2, History, LayoutDashboard, ListTodo, Menu, Network, ShieldCheck, UsersRound, Users, X, BriefcaseBusiness } from "lucide-react"
+import { Building2, CalendarCheck, CalendarClock, ClipboardCheck, History, LayoutDashboard, ListTodo, Menu, Network, ShieldCheck, UsersRound, Users, X, BriefcaseBusiness } from "lucide-react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -17,6 +17,9 @@ type NavItem = {
   permission: string | string[] | null
   // Only show when acting within a tenant (org user, or global user switched in).
   requiresOrgContext?: boolean
+  // Hide the item when the user holds any of these roles (e.g. admin-only
+  // accounts that aren't employees shouldn't see self-service attendance).
+  hideForRoles?: string[]
 }
 
 const navGroups: { labelKey: string | null; items: NavItem[] }[] = [
@@ -24,6 +27,7 @@ const navGroups: { labelKey: string | null; items: NavItem[] }[] = [
     labelKey: null,
     items: [
       { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, permission: null },
+      { to: "/my-attendance", labelKey: "nav.myAttendance", icon: CalendarClock, permission: null, requiresOrgContext: true, hideForRoles: ["super_admin", "platform_admin"] },
       { to: "/organization", labelKey: "nav.organization", icon: Building2, permission: ["manage_users", "manage_roles", "platform.manage_organizations"], requiresOrgContext: true },
     ],
   },
@@ -33,6 +37,9 @@ const navGroups: { labelKey: string | null; items: NavItem[] }[] = [
       { to: "/employees", labelKey: "nav.employees", icon: UsersRound, permission: "employees.view", requiresOrgContext: true },
       { to: "/departments", labelKey: "nav.departments", icon: Network, permission: "departments.view", requiresOrgContext: true },
       { to: "/job-titles", labelKey: "nav.jobTitles", icon: BriefcaseBusiness, permission: "jobtitles.view", requiresOrgContext: true },
+      { to: "/attendance-dashboard", labelKey: "nav.attendanceDashboard", icon: LayoutDashboard, permission: "attendance.view", requiresOrgContext: true },
+      { to: "/attendance", labelKey: "nav.attendance", icon: CalendarCheck, permission: "attendance.view", requiresOrgContext: true },
+      { to: "/attendance-corrections", labelKey: "nav.corrections", icon: ClipboardCheck, permission: ["attendance.approve", "attendance.view"], requiresOrgContext: true },
     ],
   },
   {
@@ -50,12 +57,14 @@ export function AppLayout() {
   const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const hasPermission = useAuthStore((s) => s.hasPermission)
+  const hasRole = useAuthStore((s) => s.hasRole)
   const [open, setOpen] = useState(false)
   const location = useLocation()
 
   const inTenantContext = user?.scope === "org" || user?.activeOrganizationId != null
   const canSee = (item: NavItem) => {
     if (item.requiresOrgContext && !inTenantContext) return false
+    if (item.hideForRoles?.some((r) => hasRole(r))) return false
     if (item.permission == null) return true
     const required = Array.isArray(item.permission) ? item.permission : [item.permission]
     return required.some((p) => hasPermission(p))

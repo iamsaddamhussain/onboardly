@@ -29,6 +29,16 @@ public static class Permissions
     public const string EditJobTitles = "jobtitles.edit";
     public const string DeleteJobTitles = "jobtitles.delete";
 
+    // --- Attendance (organization-scoped) ---
+    public const string ViewAttendance = "attendance.view";
+    public const string CreateAttendance = "attendance.create";
+    public const string EditAttendance = "attendance.edit";
+    public const string DeleteAttendance = "attendance.delete";
+    public const string CheckInAttendance = "attendance.checkin";
+    public const string CheckOutAttendance = "attendance.checkout";
+    public const string ApproveAttendance = "attendance.approve";
+    public const string ExportAttendance = "attendance.export";
+
     // --- Global (platform-level) permissions, not bound to any tenant ---
     public const string PlatformManageOrganizations = "platform.manage_organizations";
     public const string PlatformManageSubscriptions = "platform.manage_subscriptions";
@@ -57,6 +67,14 @@ public static class Permissions
         CreateJobTitles,
         EditJobTitles,
         DeleteJobTitles,
+        ViewAttendance,
+        CreateAttendance,
+        EditAttendance,
+        DeleteAttendance,
+        CheckInAttendance,
+        CheckOutAttendance,
+        ApproveAttendance,
+        ExportAttendance,
     };
 
     // Global/platform permissions (IsGlobal = true).

@@ -28,6 +28,10 @@ public interface IAuditService
     // Audit history for a specific entity instance (its own change timeline).
     Task<IReadOnlyList<AuditLogListItem>> GetForEntityAsync(string entityType, string entityId, int take = 50);
 
+    // An organization's audit entries on a single calendar day (UTC), for the
+    // contribution-graph drill-down.
+    Task<IReadOnlyList<AuditLogListItem>> GetForOrganizationOnDateAsync(int organizationId, DateOnly date, int take = 100);
+
     // Daily activity counts for a user's contribution heatmap (since a date).
     Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForUserAsync(int userId, DateTime since);
 
@@ -81,6 +85,16 @@ public class AuditService : IAuditService
 
     public async Task<IReadOnlyList<AuditLogListItem>> GetForEntityAsync(string entityType, string entityId, int take = 50) =>
         await RecentQuery(_db.AuditLogs.Where(a => a.EntityType == entityType && a.EntityId == entityId), take);
+
+    public async Task<IReadOnlyList<AuditLogListItem>> GetForOrganizationOnDateAsync(int organizationId, DateOnly date, int take = 100)
+    {
+        // Match the heatmap, which buckets by the UTC calendar day.
+        var start = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var end = start.AddDays(1);
+        return await RecentQuery(
+            _db.AuditLogs.Where(a => a.OrganizationId == organizationId && a.Timestamp >= start && a.Timestamp < end),
+            take);
+    }
 
     public Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForUserAsync(int userId, DateTime since) =>
         HeatmapQuery(_db.AuditLogs.Where(a => a.UserId == userId), since);

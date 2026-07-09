@@ -314,6 +314,129 @@ export interface EmployeeFilters {
   joiningDateTo?: string
 }
 
+// --- Attendance module ---
+
+export const ATTENDANCE_STATUSES = [
+  "Present",
+  "Absent",
+  "Late",
+  "HalfDay",
+  "Leave",
+  "Holiday",
+  "Weekend",
+  "WorkFromHome",
+  "OnDuty",
+] as const
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number]
+
+export const CORRECTION_STATUSES = ["Pending", "Approved", "Rejected"] as const
+export type CorrectionStatus = (typeof CORRECTION_STATUSES)[number]
+
+export interface AttendanceRow {
+  id: number
+  employeeId: number
+  employeeNumber: string
+  employeeName: string
+  departmentName: string | null
+  date: string
+  checkInAt: string | null
+  checkOutAt: string | null
+  workedMinutes: number
+  breakMinutes: number
+  overtimeMinutes: number
+  status: AttendanceStatus
+  remarks: string | null
+}
+
+export interface AttendanceEventItem {
+  id: number
+  type: "CheckIn" | "CheckOut" | "BreakStart" | "BreakEnd"
+  occurredAt: string
+  source: string
+  notes: string | null
+}
+
+export interface AttendanceDetail extends AttendanceRow {
+  events: AttendanceEventItem[]
+}
+
+export interface MyAttendanceToday {
+  recordId: number | null
+  date: string
+  checkInAt: string | null
+  checkOutAt: string | null
+  workedMinutes: number
+  breakMinutes: number
+  status: AttendanceStatus
+  isCheckedIn: boolean
+  isOnBreak: boolean
+  hasCheckedOut: boolean
+  isLinked: boolean
+  currentBreakStartedAt: string | null
+}
+
+export interface AttendanceFilters {
+  employeeId?: number
+  departmentId?: number
+  status?: AttendanceStatus
+  dateFrom?: string
+  dateTo?: string
+}
+
+export interface SaveAttendanceInput {
+  employeeId: number
+  date: string
+  checkInAt?: string | null
+  checkOutAt?: string | null
+  breakMinutes: number
+  status: AttendanceStatus
+  remarks?: string | null
+}
+
+export interface CorrectionRow {
+  id: number
+  employeeId: number
+  employeeNumber: string
+  employeeName: string
+  date: string
+  requestedCheckInAt: string | null
+  requestedCheckOutAt: string | null
+  requestedStatus: AttendanceStatus | null
+  reason: string
+  status: CorrectionStatus
+  reviewNotes: string | null
+  reviewedAt: string | null
+  createdAt: string
+}
+
+export interface SaveCorrectionInput {
+  date: string
+  requestedCheckInAt?: string | null
+  requestedCheckOutAt?: string | null
+  requestedStatus?: AttendanceStatus | null
+  reason: string
+  employeeId?: number
+}
+
+export interface AttendanceDashboardStats {
+  date: string
+  totalEmployees: number
+  presentToday: number
+  absentToday: number
+  lateToday: number
+  onLeaveToday: number
+  workFromHomeToday: number
+  missingCheckOut: number
+  pendingCorrections: number
+}
+
+export interface AttendanceTrendPoint {
+  date: string
+  present: number
+  absent: number
+  late: number
+}
+
 // Per-request options understood by our interceptor.
 type RequestConfig = InternalAxiosRequestConfig & {
   // Skip the global redirect-to-login behaviour for an expected 401
@@ -511,4 +634,44 @@ export const api = {
         params: { search: search || undefined, includeUserId },
       })
       .then((r) => r.data),
+
+  // --- Attendance self-service & workflow ---
+  myAttendanceToday: () =>
+    http.get<MyAttendanceToday>("/api/attendance/me").then((r) => r.data),
+
+  attendanceCheckIn: () =>
+    http.post<AttendanceDetail>("/api/attendance/check-in").then((r) => r.data),
+  attendanceCheckOut: () =>
+    http.post<AttendanceDetail>("/api/attendance/check-out").then((r) => r.data),
+  attendanceBreakStart: () =>
+    http.post<AttendanceDetail>("/api/attendance/break-start").then((r) => r.data),
+  attendanceBreakEnd: () =>
+    http.post<AttendanceDetail>("/api/attendance/break-end").then((r) => r.data),
+
+  attendanceDashboard: (date?: string) =>
+    http
+      .get<AttendanceDashboardStats>("/api/attendance/dashboard", {
+        params: date ? { date } : {},
+      })
+      .then((r) => r.data),
+
+  attendanceTrend: (from?: string, to?: string) =>
+    http
+      .get<AttendanceTrendPoint[]>("/api/attendance/trend", {
+        params: { from, to },
+      })
+      .then((r) => r.data),
+
+  reviewCorrection: (id: number, approve: boolean, reviewNotes?: string) =>
+    http
+      .post<void>(`/api/attendance-corrections/${id}/${approve ? "approve" : "reject"}`, {
+        reviewNotes,
+      })
+      .then(() => undefined),
+
+  // Triggers a CSV download honouring the current attendance filters.
+  exportAttendance: (filters: AttendanceFilters) =>
+    http
+      .get("/api/attendance/export", { params: filters, responseType: "blob" })
+      .then((r) => r.data as Blob),
 }

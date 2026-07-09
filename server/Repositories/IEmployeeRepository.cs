@@ -28,6 +28,9 @@ public interface IEmployeeRepository
 
     Task<Employee?> GetByIdAsync(int id);
 
+    // The employee record linked to a user account (self-service resolution).
+    Task<Employee?> GetByUserIdAsync(int userId);
+
     Task<EmployeeDetail?> GetDetailAsync(int id);
 
     Task<bool> ExistsAsync(int id);

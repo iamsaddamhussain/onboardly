@@ -21,6 +21,11 @@ import DepartmentsPage from "@/pages/hr/Departments"
 import DepartmentFormPage from "@/pages/hr/DepartmentForm"
 import JobTitlesPage from "@/pages/hr/JobTitles"
 import JobTitleFormPage from "@/pages/hr/JobTitleForm"
+import AttendancePage from "@/pages/hr/Attendance"
+import AttendanceFormPage from "@/pages/hr/AttendanceForm"
+import AttendanceDashboardPage from "@/pages/hr/AttendanceDashboard"
+import MyAttendancePage from "@/pages/hr/MyAttendance"
+import CorrectionsPage from "@/pages/hr/Corrections"
 
 export default function App() {
   return (
@@ -178,6 +183,47 @@ export default function App() {
             </PermissionRoute>
           }
         />
+        <Route
+          path="/attendance"
+          element={
+            <PermissionRoute permission="attendance.view">
+              <AttendancePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/attendance/new"
+          element={
+            <PermissionRoute permission="attendance.create">
+              <AttendanceFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/attendance/:id/edit"
+          element={
+            <PermissionRoute permission="attendance.edit">
+              <AttendanceFormPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/attendance-dashboard"
+          element={
+            <PermissionRoute permission="attendance.view">
+              <AttendanceDashboardPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/attendance-corrections"
+          element={
+            <PermissionRoute permission={["attendance.approve", "attendance.view"]}>
+              <CorrectionsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route path="/my-attendance" element={<MyAttendancePage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

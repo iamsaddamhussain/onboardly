@@ -1,14 +1,16 @@
-import { Building2, CalendarDays, CreditCard, Hash, Users } from "lucide-react"
+import { Building2, CalendarDays, CreditCard, Hash, Users, X } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
+import { AppButton } from "@/components/AppButton"
 import { TimelineCard } from "@/components/TimelineCard"
 import { ContributionGraph } from "@/components/ContributionGraph"
 import { Avatar } from "@/components/Avatar"
 import { StatusPill } from "@/components/StatusPill"
 import { useResource } from "@/lib/query"
-import { type ActivityHeatmapPoint, type OrganizationProfile } from "@/lib/api"
+import { type ActivityHeatmapPoint, type AuditLogEntry, type OrganizationProfile } from "@/lib/api"
 import { formatLongDate } from "@/lib/format"
 
 function InfoRow({
@@ -35,6 +37,19 @@ export default function OrganizationPage() {
   const { data, isLoading } = useResource<OrganizationProfile>("organization")
   const { data: heatmap } = useResource<ActivityHeatmapPoint[]>("organization/heatmap")
 
+  // Selected heatmap day -> filter the activity timeline to that date.
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const { data: dayActivity } = useResource<AuditLogEntry[]>(
+    "organization/activity",
+    { date: selectedDate },
+    { enabled: selectedDate != null },
+  )
+
+  const timelineEntries = selectedDate ? dayActivity ?? [] : data?.recentActivity ?? []
+  const timelineTitle = selectedDate
+    ? t("organizationProfile.activityOn", { date: formatLongDate(selectedDate) })
+    : t("organizationProfile.timeline")
+
   return (
     <Page
       title={t("organizationProfile.title")}
@@ -53,6 +68,8 @@ export default function OrganizationPage() {
           <ContributionGraph
             title={t("organizationProfile.contributions")}
             points={heatmap ?? []}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
           />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <Card className="gap-5 rounded-none p-6">
@@ -81,9 +98,16 @@ export default function OrganizationPage() {
             </Card>
 
             <TimelineCard
-              title={t("organizationProfile.timeline")}
-              entries={data.recentActivity}
-              emptyLabel={t("organizationProfile.empty")}
+              title={timelineTitle}
+              entries={timelineEntries}
+              emptyLabel={selectedDate ? t("organizationProfile.emptyDay") : t("organizationProfile.empty")}
+              action={
+                selectedDate ? (
+                  <AppButton variant="ghost" icon={X} onClick={() => setSelectedDate(null)}>
+                    {t("organizationProfile.clearDay")}
+                  </AppButton>
+                ) : undefined
+              }
             />
           </div>
         </div>

@@ -9,7 +9,7 @@ import { FormInput } from "@/components/FormInput"
 import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
 import { AppButton } from "@/components/AppButton"
-import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useResource, useResourceMutation } from "@/lib/query"
@@ -225,13 +225,12 @@ export default function EmployeeFormPage() {
               <Label htmlFor="joiningDate" required>
                 {t("employeeForm.joiningDate")}
               </Label>
-              <Input
+              <DatePicker
                 id="joiningDate"
-                type="date"
                 value={form.joiningDate}
-                onChange={(e) => update("joiningDate", e.target.value)}
+                onChange={(v) => update("joiningDate", v)}
+                clearable={false}
                 aria-invalid={!!errors.joiningDate}
-                className="rounded-none"
               />
               {errors.joiningDate && (
                 <p className="text-xs text-destructive">{errors.joiningDate}</p>

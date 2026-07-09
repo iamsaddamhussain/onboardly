@@ -9,7 +9,7 @@ import { AppButton } from "@/components/AppButton"
 import { ActionButton } from "@/components/ActionButton"
 import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
-import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
 import { DataTable } from "@/components/datatable/DataTable"
 import { column } from "@/components/datatable/column"
@@ -190,23 +190,11 @@ export default function EmployeesPage() {
             />
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="from">{t("employees.filters.joinedFrom")}</Label>
-              <Input
-                id="from"
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="rounded-none"
-              />
+              <DatePicker id="from" value={from} onChange={setFrom} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="to">{t("employees.filters.joinedTo")}</Label>
-              <Input
-                id="to"
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="rounded-none"
-              />
+              <DatePicker id="to" value={to} onChange={setTo} />
             </div>
             {hasFilters && (
               <div className="flex items-end">
