@@ -45,4 +45,17 @@ public class OrganizationProfileController : ApiControllerBase
             org.Id, org.Name, org.Slug, org.IsActive, org.SubscriptionTier,
             org.CreatedAt, org.UserCount, activity));
     }
+
+    // Daily activity counts for the active organization's contribution heatmap
+    // (roughly the past year), rendered as a GitHub-style graph.
+    [HttpGet("heatmap")]
+    [RequirePermission(Permissions.ManageUsers, Permissions.ManageRoles, Permissions.PlatformManageOrganizations)]
+    public async Task<IActionResult> Heatmap()
+    {
+        if (_tenant.OrganizationId is not int organizationId)
+            return NoContent();
+
+        var points = await _audit.GetHeatmapForOrganizationAsync(organizationId, DateTime.UtcNow.AddDays(-371));
+        return Ok(points);
+    }
 }

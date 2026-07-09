@@ -26,6 +26,12 @@ public interface IAuditService
 
     // Recent audit entries for an organization's timeline (company activity).
     Task<IReadOnlyList<AuditLogListItem>> GetRecentForOrganizationAsync(int organizationId, int take = 20);
+
+    // Daily activity counts for a user's contribution heatmap (since a date).
+    Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForUserAsync(int userId, DateTime since);
+
+    // Daily activity counts for an organization's contribution heatmap.
+    Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForOrganizationAsync(int organizationId, DateTime since);
 }
 
 public class AuditService : IAuditService
@@ -71,6 +77,28 @@ public class AuditService : IAuditService
 
     public async Task<IReadOnlyList<AuditLogListItem>> GetRecentForOrganizationAsync(int organizationId, int take = 20) =>
         await RecentQuery(_db.AuditLogs.Where(a => a.OrganizationId == organizationId), take);
+
+    public Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForUserAsync(int userId, DateTime since) =>
+        HeatmapQuery(_db.AuditLogs.Where(a => a.UserId == userId), since);
+
+    public Task<IReadOnlyList<ActivityHeatmapPoint>> GetHeatmapForOrganizationAsync(int organizationId, DateTime since) =>
+        HeatmapQuery(_db.AuditLogs.Where(a => a.OrganizationId == organizationId), since);
+
+    // Groups audit rows by calendar day (UTC) and counts them. The DateOnly
+    // conversion runs in-memory after materialisation so it stays translatable.
+    private static async Task<IReadOnlyList<ActivityHeatmapPoint>> HeatmapQuery(IQueryable<AuditLog> query, DateTime since)
+    {
+        var rows = await query
+            .AsNoTracking()
+            .Where(a => a.Timestamp >= since)
+            .GroupBy(a => a.Timestamp.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return rows
+            .Select(r => new ActivityHeatmapPoint(DateOnly.FromDateTime(r.Date), r.Count))
+            .ToList();
+    }
 
     private static async Task<IReadOnlyList<AuditLogListItem>> RecentQuery(IQueryable<AuditLog> query, int take) =>
         await query

@@ -8,6 +8,13 @@
     "back": "Back",
     "dash": "—"
   },
+  "contributions": {
+    "total": "{{count}} actions in the last year",
+    "tooltip": "{{count}} activity on {{date}}",
+    "tooltip_other": "{{count}} activities on {{date}}",
+    "less": "Less",
+    "more": "More"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users",
@@ -53,6 +60,7 @@
     "inactive": "Inactive",
     "timeline": "Recent activity",
     "empty": "No recent activity.",
+    "contributions": "Activity",
     "noActiveOrg": "Switch into an organization to view its profile."
   },
   "organizations": {
@@ -246,7 +254,8 @@
     "saving": "Saving…",
     "saveChanges": "Save Changes",
     "activityTitle": "Recent activity",
-    "activityEmpty": "No recent activity."
+    "activityEmpty": "No recent activity.",
+    "contributions": "Activity"
   },
   "settings": {
     "title": "Settings",

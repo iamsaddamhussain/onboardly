@@ -115,6 +115,17 @@ public class AuthController : ApiControllerBase
         return Ok(events);
     }
 
+    // Daily activity counts for the signed-in user's contribution heatmap
+    // (roughly the past year), rendered as a GitHub-style graph.
+    [Authorize]
+    [HttpGet("activity/heatmap")]
+    public async Task<IActionResult> ActivityHeatmap()
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var points = await _audit.GetHeatmapForUserAsync(id, DateTime.UtcNow.AddDays(-371));
+        return Ok(points);
+    }
+
     // Start impersonating another user. Restricted to accounts holding the
     // impersonate_users permission (super admin). The original admin id is
     // stamped onto the cookie so the session can be switched back.

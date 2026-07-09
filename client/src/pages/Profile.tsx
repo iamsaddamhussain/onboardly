@@ -7,11 +7,12 @@ import { Page } from "@/components/Page"
 import { FormSection } from "@/components/FormSection"
 import { FormInput } from "@/components/FormInput"
 import { TimelineCard } from "@/components/TimelineCard"
+import { ContributionGraph } from "@/components/ContributionGraph"
 import { Avatar } from "@/components/Avatar"
 import { AppButton } from "@/components/AppButton"
 import { Card } from "@/components/ui/card"
 import { useResource, useResourceMutation } from "@/lib/query"
-import { api, ApiError, type AuditLogEntry, type Profile } from "@/lib/api"
+import { api, ApiError, type ActivityHeatmapPoint, type AuditLogEntry, type Profile } from "@/lib/api"
 import { formatLongDate } from "@/lib/format"
 import { optional, trimmed } from "@/lib/utils"
 
@@ -32,6 +33,7 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useResource<Profile>("auth/profile")
   const { data: activity } = useResource<AuditLogEntry[]>("auth/activity")
+  const { data: heatmap } = useResource<ActivityHeatmapPoint[]>("auth/activity/heatmap")
 
   useEffect(() => {
     if (!profile) return
@@ -183,7 +185,11 @@ export default function ProfilePage() {
         </div>
       </form>
 
-      <div className="mt-8 max-w-2xl">
+      <div className="mt-8 flex max-w-2xl flex-col gap-6">
+        <ContributionGraph
+          title={t("profile.contributions")}
+          points={heatmap ?? []}
+        />
         <TimelineCard
           title={t("profile.activityTitle")}
           entries={activity ?? []}

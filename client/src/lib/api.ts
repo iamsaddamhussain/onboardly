@@ -104,6 +104,13 @@ export interface AuditLogEntry {
   userAgent: string | null
 }
 
+// A single day's activity count for the contribution heatmap. The date is an
+// ISO calendar day (YYYY-MM-DD) as serialized from the server's DateOnly.
+export interface ActivityHeatmapPoint {
+  date: string
+  count: number
+}
+
 // Read-only company profile: the active organization's details + timeline.
 export interface OrganizationProfile {
   id: number
