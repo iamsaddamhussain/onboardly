@@ -14,12 +14,14 @@ public class RolesController : ApiControllerBase
     private readonly IRoleRepository _roles;
     private readonly IPermissionRepository _permissions;
     private readonly ITenantContext _tenant;
+    private readonly IUserAccessService _access;
 
-    public RolesController(IRoleRepository roles, IPermissionRepository permissions, ITenantContext tenant)
+    public RolesController(IRoleRepository roles, IPermissionRepository permissions, ITenantContext tenant, IUserAccessService access)
     {
         _roles = roles;
         _permissions = permissions;
         _tenant = tenant;
+        _access = access;
     }
 
     [HttpGet]
@@ -83,6 +85,13 @@ public class RolesController : ApiControllerBase
         }
 
         await _roles.SetPermissions(role, finalIds.ToArray());
+
+        // Users hold a short-lived permission cache, so clearing a role's
+        // permissions must invalidate every assigned user; otherwise the change
+        // wouldn't take effect until their cache expired.
+        foreach (var userId in await _roles.GetUserIds(role.Id))
+            _access.Invalidate(userId);
+
         return NoContent();
     }
 

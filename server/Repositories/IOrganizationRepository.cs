@@ -27,4 +27,7 @@ public interface IOrganizationRepository
     Task<Organization> Create(string name, string slug, string? subscriptionTier);
 
     Task Update(Organization organization, UpdateOrganizationRequest request);
+
+    // Persist the HR-managed attendance policy (time zone + office hours).
+    Task UpdateAttendanceSettings(Organization organization, UpdateAttendanceSettingsRequest request);
 }

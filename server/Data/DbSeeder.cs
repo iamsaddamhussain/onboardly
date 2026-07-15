@@ -20,6 +20,11 @@ public static class DbSeeder
         await SeedRolesAndPermissionsAsync(db);
         await SeedDefaultOrgRoleAsync(db, defaultOrg);
 
+        // Seed the standard leave catalogue for every tenant, not just the
+        // default org, so any organization gets leave types + a default policy.
+        foreach (var org in await db.Organizations.ToListAsync())
+            await SeedLeaveDefaultsAsync(db, org);
+
         var superAdmin = await db.Roles.FirstAsync(r => r.Name == Authorization.Roles.SuperAdmin);
         var platformAdmin = await db.Roles.FirstAsync(r => r.Name == Authorization.Roles.PlatformAdmin);
 
@@ -125,6 +130,17 @@ public static class DbSeeder
         }
         await db.SaveChangesAsync();
 
+        // Prune permissions that are no longer in the catalogue so removed ones
+        // disappear from the Roles UI (EF cascades the role_permission links).
+        var catalogue = Permissions.All.ToHashSet();
+        var stale = permissions.Where(p => !catalogue.Contains(p.Name)).ToList();
+        if (stale.Count > 0)
+        {
+            db.Permissions.RemoveRange(stale);
+            permissions.RemoveAll(stale.Contains);
+            await db.SaveChangesAsync();
+        }
+
         // Org-scoped super admin: holds every organization permission.
         await EnsureRoleWithPermissionsAsync(
             db, Authorization.Roles.SuperAdmin, RoleScope.Organization,
@@ -184,5 +200,108 @@ public static class DbSeeder
         }
 
         await db.SaveChangesAsync();
+    }
+
+    // Seeds a standard catalogue of leave types and a "Default Policy" bundling
+    // them with sensible annual entitlements, for the given tenant. Idempotent:
+    // existing types (matched by code) and an existing default policy are left
+    // untouched, so it is safe to run on every startup.
+    private static async Task SeedLeaveDefaultsAsync(AppDbContext db, Organization org)
+    {
+        // (Code suffix, Name, Color, Paid, RequiresApproval, HalfDay, Gender,
+        //  AnnualEntitlement) — code becomes "{PREFIX}-LVT-{suffix}".
+        var specs = new (string Code, string Name, string Color, bool Paid, bool Approval, bool HalfDay, GenderRestriction Gender, decimal Entitlement)[]
+        {
+            ("001", "Annual Leave",      "#2563eb", true,  true,  true,  GenderRestriction.Any,    12),
+            ("002", "Casual Leave",      "#0891b2", true,  true,  true,  GenderRestriction.Any,     6),
+            ("003", "Sick Leave",        "#dc2626", true,  true,  true,  GenderRestriction.Any,     8),
+            ("004", "Maternity Leave",   "#db2777", true,  true,  false, GenderRestriction.Female, 90),
+            ("005", "Paternity Leave",   "#7c3aed", true,  true,  false, GenderRestriction.Male,    5),
+            ("006", "Bereavement Leave", "#4b5563", true,  true,  false, GenderRestriction.Any,     3),
+            ("007", "Marriage Leave",    "#ea580c", true,  true,  false, GenderRestriction.Any,     3),
+            ("008", "Comp Off",          "#16a34a", true,  true,  true,  GenderRestriction.Any,     0),
+            ("009", "Work From Home",    "#0d9488", false, true,  true,  GenderRestriction.Any,     0),
+            ("010", "Leave Without Pay", "#6b7280", false, true,  true,  GenderRestriction.Any,     0),
+        };
+
+        var prefix = CompanyPrefix(org.Slug);
+
+        // Upsert leave types (matched by tenant-unique code).
+        var typesByCode = new Dictionary<string, LeaveType>();
+        foreach (var spec in specs)
+        {
+            var code = $"{prefix}-LVT-{spec.Code}";
+            var type = await db.LeaveTypes
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.OrganizationId == org.Id && t.Code == code);
+
+            if (type is null)
+            {
+                type = new LeaveType
+                {
+                    OrganizationId = org.Id,
+                    Code = code,
+                    Name = spec.Name,
+                    Color = spec.Color,
+                    IsPaid = spec.Paid,
+                    CountsTowardPayroll = !spec.Paid,
+                    RequiresApproval = spec.Approval,
+                    AllowHalfDay = spec.HalfDay,
+                    GenderRestriction = spec.Gender,
+                    CanAttachDocument = spec.Name == "Sick Leave",
+                    DocumentRequiredAfterDays = spec.Name == "Sick Leave" ? 2 : null,
+                    MinDurationDays = 1,
+                    IsActive = true,
+                };
+                db.LeaveTypes.Add(type);
+            }
+
+            typesByCode[spec.Code] = type;
+        }
+
+        await db.SaveChangesAsync();
+
+        // Create the default policy once, bundling the seeded types with their
+        // entitlements. Skipped entirely if the tenant already has any policy.
+        var hasPolicy = await db.LeavePolicies
+            .IgnoreQueryFilters()
+            .AnyAsync(p => p.OrganizationId == org.Id);
+
+        if (!hasPolicy)
+        {
+            var policy = new LeavePolicy
+            {
+                OrganizationId = org.Id,
+                Code = $"{prefix}-LVP-001",
+                Name = "Default Policy",
+                Description = "Standard leave entitlements applied to employees by default.",
+                IsDefault = true,
+                IsActive = true,
+            };
+
+            foreach (var spec in specs)
+            {
+                policy.LeaveTypes.Add(new LeavePolicyLeaveType
+                {
+                    OrganizationId = org.Id,
+                    LeaveType = typesByCode[spec.Code],
+                    AnnualEntitlementDays = spec.Entitlement,
+                    AccrualMethod = AccrualMethod.Immediate,
+                });
+            }
+
+            db.LeavePolicies.Add(policy);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    // Short, uppercase alphanumeric prefix from a tenant slug (mirrors
+    // CodeGenerator so seeded codes look consistent). Falls back to "ORG".
+    private static string CompanyPrefix(string? slug)
+    {
+        if (string.IsNullOrWhiteSpace(slug))
+            return "ORG";
+        var alnum = new string(slug.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+        return alnum.Length == 0 ? "ORG" : alnum[..Math.Min(4, alnum.Length)];
     }
 }

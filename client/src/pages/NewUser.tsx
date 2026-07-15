@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, IdCard, LogIn, Settings2, ShieldCheck, Trash2, UserPen, UserPlus } from "lucide-react"
+import { ArrowLeft, IdCard, LogIn, Settings2, ShieldCheck, UserPen, UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { startCase } from "lodash-es"
 
@@ -11,6 +11,7 @@ import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
 import { ToggleList } from "@/components/ToggleList"
 import { AppButton } from "@/components/AppButton"
+import { FormActions } from "@/components/FormActions"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -367,28 +368,14 @@ export default function UserFormPage() {
           </FormSection>
         )}
 
-        <div className="flex justify-end gap-2">
-          <AppButton type="button" variant="outline" onClick={requestLeave}>
-            {t("userForm.cancel")}
-          </AppButton>
-          {canDelete && (
-            <AppButton
-              type="button"
-              variant="destructive"
-              icon={Trash2}
-              onClick={() => setDeleteOpen(true)}
-            >
-              {t("userForm.delete")}
-            </AppButton>
-          )}
-          <AppButton
-            type="submit"
-            loading={saving}
-            loadingText={editing ? t("userForm.saving") : t("userForm.creating")}
-          >
-            {editing ? t("userForm.saveChanges") : t("userForm.createUser")}
-          </AppButton>
-        </div>
+        <FormActions
+          editing={editing}
+          onCancel={requestLeave}
+          saving={saving}
+          showDelete={canDelete}
+          onDelete={() => setDeleteOpen(true)}
+          submitLabel={editing ? t("userForm.saveChanges") : t("userForm.createUser")}
+        />
       </form>
 
       <ConfirmDialog

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Briefcase, IdCard, Trash2, UserRound, UsersRound } from "lucide-react"
+import { ArrowLeft, Briefcase, IdCard, UserRound, UsersRound } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
@@ -9,8 +9,10 @@ import { FormInput } from "@/components/FormInput"
 import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
 import { AppButton } from "@/components/AppButton"
+import { FormActions } from "@/components/FormActions"
 import { DatePicker } from "@/components/DatePicker"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useResource, useResourceMutation } from "@/lib/query"
 import { save, destroy } from "@/lib/resource"
@@ -35,6 +37,7 @@ const empty = {
   joiningDate: "",
   employmentStatus: "Active",
   employmentType: "FullTime",
+  leaveEligible: false,
   workEmail: "",
   workPhone: "",
   notes: "",
@@ -82,6 +85,7 @@ export default function EmployeeFormPage() {
       joiningDate: existing.joiningDate.slice(0, 10),
       employmentStatus: existing.employmentStatus,
       employmentType: existing.employmentType,
+      leaveEligible: existing.leaveEligible,
       workEmail: existing.workEmail ?? "",
       workPhone: existing.workPhone ?? "",
       notes: existing.notes ?? "",
@@ -116,6 +120,7 @@ export default function EmployeeFormPage() {
         joiningDate: data.joiningDate,
         employmentStatus: data.employmentStatus,
         employmentType: data.employmentType,
+        leaveEligible: data.leaveEligible,
         workEmail: data.workEmail.trim() || null,
         workPhone: data.workPhone.trim() || null,
         notes: data.notes.trim() || null,
@@ -321,6 +326,20 @@ export default function EmployeeFormPage() {
               <p className="text-xs text-muted-foreground">{t("employeeForm.managerHint")}</p>
             )}
           </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <Label htmlFor="leaveEligible">{t("employeeForm.leaveEligible")}</Label>
+              <p className="text-xs text-muted-foreground">
+                {t("employeeForm.leaveEligibleHint")}
+              </p>
+            </div>
+            <Switch
+              id="leaveEligible"
+              checked={form.leaveEligible}
+              onCheckedChange={(v) => update("leaveEligible", v)}
+            />
+          </div>
         </FormSection>
 
         <FormSection title={t("employeeForm.contact")} icon={UserRound}>
@@ -354,28 +373,14 @@ export default function EmployeeFormPage() {
           />
         </FormSection>
 
-        <div className="flex justify-end gap-2">
-          <AppButton type="button" variant="outline" onClick={requestLeave}>
-            {t("common.cancel")}
-          </AppButton>
-          {editing && canDelete && (
-            <AppButton
-              type="button"
-              variant="destructive"
-              icon={Trash2}
-              onClick={() => setDeleteOpen(true)}
-            >
-              {t("common.delete")}
-            </AppButton>
-          )}
-          <AppButton
-            type="submit"
-            loading={mutation.isPending}
-            loadingText={editing ? t("common.saving") : t("common.creating")}
-          >
-            {editing ? t("common.saveChanges") : t("employeeForm.create")}
-          </AppButton>
-        </div>
+        <FormActions
+          editing={editing}
+          onCancel={requestLeave}
+          saving={mutation.isPending}
+          showDelete={editing && canDelete}
+          onDelete={() => setDeleteOpen(true)}
+          submitLabel={editing ? t("common.saveChanges") : t("employeeForm.create")}
+        />
       </form>
 
       <ConfirmDialog

@@ -44,4 +44,23 @@ public record OrganizationProfileResponse(
     string? SubscriptionTier,
     DateTime CreatedAt,
     int UserCount,
-    IReadOnlyList<AuditLogListItem> RecentActivity);
+    IReadOnlyList<AuditLogListItem> RecentActivity,
+    string TimeZone,
+    IReadOnlyList<string> WorkDays,
+    TimeOnly WorkdayStart,
+    TimeOnly WorkdayEnd,
+    int BreakMinutes,
+    bool FlagMissingPunches);
+
+// HR-managed attendance policy for the active organization: the office time zone,
+// working days and window, and whether open days are flagged for review.
+public record UpdateAttendanceSettingsRequest(
+    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Time zone is required.")]
+    [System.ComponentModel.DataAnnotations.MaxLength(64)]
+    string TimeZone,
+    IReadOnlyList<string> WorkDays,
+    TimeOnly WorkdayStart,
+    TimeOnly WorkdayEnd,
+    [System.ComponentModel.DataAnnotations.Range(0, 1440, ErrorMessage = "Break minutes must be between 0 and 1440.")]
+    int BreakMinutes,
+    bool FlagMissingPunches);

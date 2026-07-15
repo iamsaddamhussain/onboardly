@@ -57,6 +57,9 @@ export interface User {
   // Tenant a global user is currently viewing via the org selector, if any.
   activeOrganizationId: number | null
   activeOrganizationName: string | null
+  // True when this user is linked to a leave-eligible employee record, i.e. is
+  // allowed to use the self-service leave system.
+  canUseLeave: boolean
 }
 
 export interface Organization {
@@ -121,6 +124,24 @@ export interface OrganizationProfile {
   createdAt: string
   userCount: number
   recentActivity: AuditLogEntry[]
+  // HR-managed attendance policy / work schedule.
+  timeZone: string
+  workDays: string[]
+  workdayStart: string
+  workdayEnd: string
+  breakMinutes: number
+  flagMissingPunches: boolean
+}
+
+// Payload for HR updating the organization's attendance policy. Times are
+// "HH:mm" strings in the given time zone; workDays are day names.
+export interface AttendanceSettingsInput {
+  timeZone: string
+  workDays: string[]
+  workdayStart: string
+  workdayEnd: string
+  breakMinutes: number
+  flagMissingPunches: boolean
 }
 
 export interface Profile {
@@ -282,6 +303,7 @@ export interface EmployeeRow {
   joiningDate: string
   employmentStatus: EmploymentStatus
   employmentType: EmploymentType
+  leaveEligible: boolean
   workEmail: string | null
   workPhone: string | null
   createdAt: string
@@ -302,6 +324,17 @@ export interface AssignableUser {
   id: number
   fullName: string
   email: string
+}
+
+export interface OrgChartNode {
+  id: number
+  employeeNumber: string
+  fullName: string
+  jobTitleName: string | null
+  departmentName: string | null
+  employmentStatus: string
+  reportingManagerId: number | null
+  userId: number | null
 }
 
 // Filters accepted by the employees datatable (merged into the request params).
@@ -326,6 +359,7 @@ export const ATTENDANCE_STATUSES = [
   "Weekend",
   "WorkFromHome",
   "OnDuty",
+  "MissingPunch",
 ] as const
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number]
 
@@ -344,6 +378,8 @@ export interface AttendanceRow {
   workedMinutes: number
   breakMinutes: number
   overtimeMinutes: number
+  lateMinutes: number
+  earlyLeaveMinutes: number
   status: AttendanceStatus
   remarks: string | null
 }
@@ -436,6 +472,220 @@ export interface AttendanceTrendPoint {
   absent: number
   late: number
 }
+
+// --- Leave module ---
+
+export const LEAVE_STATUSES = [
+  "Draft",
+  "Submitted",
+  "Pending",
+  "Approved",
+  "Rejected",
+  "Cancelled",
+  "Withdrawn",
+] as const
+export type LeaveStatus = (typeof LEAVE_STATUSES)[number]
+
+export const DAY_PORTIONS = ["Full", "FirstHalf", "SecondHalf"] as const
+export type DayPortion = (typeof DAY_PORTIONS)[number]
+
+export const ACCRUAL_METHODS = [
+  "Immediate",
+  "Monthly",
+  "Quarterly",
+  "Anniversary",
+  "CalendarYear",
+] as const
+export type AccrualMethod = (typeof ACCRUAL_METHODS)[number]
+
+export const GENDER_RESTRICTIONS = ["Any", "Male", "Female"] as const
+export type GenderRestriction = (typeof GENDER_RESTRICTIONS)[number]
+
+export const HOLIDAY_TYPES = ["Company", "National", "Regional", "Optional"] as const
+export type HolidayType = (typeof HOLIDAY_TYPES)[number]
+
+export const LEAVE_LEDGER_TYPES = [
+  "Opening",
+  "Accrual",
+  "Adjustment",
+  "LeaveTaken",
+  "CarryForward",
+  "Expiry",
+  "ManualCorrection",
+  "Encashment",
+] as const
+export type LeaveLedgerType = (typeof LEAVE_LEDGER_TYPES)[number]
+
+export interface LeaveTypeRow {
+  id: number
+  name: string
+  code: string
+  color: string
+  isPaid: boolean
+  requiresApproval: boolean
+  allowHalfDay: boolean
+  minDurationDays: number
+  maxDurationDays: number | null
+  genderRestriction: GenderRestriction
+  isActive: boolean
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface LeaveTypeLookup {
+  id: number
+  name: string
+  code: string
+  color: string
+  allowHalfDay: boolean
+}
+
+export interface SaveLeaveTypeInput {
+  name: string
+  color: string
+  isPaid: boolean
+  countsTowardAttendance: boolean
+  countsTowardPayroll: boolean
+  requiresApproval: boolean
+  canAttachDocument: boolean
+  documentRequiredAfterDays: number | null
+  minDurationDays: number
+  maxDurationDays: number | null
+  allowHalfDay: boolean
+  allowHourly: boolean
+  futureOnly: boolean
+  allowPastDays: boolean
+  canCarryForward: boolean
+  maxCarryForwardDays: number | null
+  carryForwardExpiryDays: number | null
+  canEncash: boolean
+  genderRestriction: GenderRestriction
+  restrictedDuringProbation: boolean
+  isActive: boolean
+}
+
+export interface LeavePolicyRow {
+  id: number
+  name: string
+  code: string
+  description: string | null
+  isDefault: boolean
+  isActive: boolean
+  leaveTypeCount: number
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface LeavePolicyLine {
+  leaveTypeId: number
+  leaveTypeName: string
+  annualEntitlementDays: number
+  accrualMethod: AccrualMethod
+}
+
+export interface LeavePolicyDetail {
+  id: number
+  name: string
+  code: string
+  description: string | null
+  isDefault: boolean
+  isActive: boolean
+  lines: LeavePolicyLine[]
+}
+
+export interface LeavePolicyLookup {
+  id: number
+  name: string
+  code: string
+  isDefault: boolean
+}
+
+export interface SaveLeavePolicyInput {
+  name: string
+  description: string | null
+  isDefault: boolean
+  isActive: boolean
+  lines: {
+    leaveTypeId: number
+    annualEntitlementDays: number
+    accrualMethod: AccrualMethod
+  }[]
+}
+
+export interface LeaveRequestRow {
+  id: number
+  employeeId: number
+  employeeName: string
+  leaveTypeId: number
+  leaveTypeName: string
+  leaveTypeColor: string
+  startDate: string
+  endDate: string
+  startPortion: DayPortion
+  endPortion: DayPortion
+  totalDays: number
+  reason: string
+  status: LeaveStatus
+  reviewNotes: string | null
+  reviewedAt: string | null
+  createdAt: string
+}
+
+export interface SaveLeaveRequestInput {
+  employeeId?: number | null
+  leaveTypeId: number
+  startDate: string
+  endDate: string
+  startPortion?: DayPortion
+  endPortion?: DayPortion
+  reason: string
+  documentUrl?: string | null
+}
+
+export interface LeaveBalanceSummary {
+  leaveTypeId: number
+  leaveTypeName: string
+  leaveTypeColor: string
+  year: number
+  entitlement: number
+  accrued: number
+  used: number
+  adjustment: number
+  carriedForward: number
+  expired: number
+  remaining: number
+}
+
+export interface AdjustLeaveBalanceInput {
+  employeeId: number
+  leaveTypeId: number
+  year?: number | null
+  type: LeaveLedgerType
+  days: number
+  notes?: string | null
+}
+
+export interface HolidayRow {
+  id: number
+  name: string
+  date: string
+  type: HolidayType
+  region: string | null
+  description: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface SaveHolidayInput {
+  name: string
+  date: string
+  type: HolidayType
+  region: string | null
+  description: string | null
+  isActive: boolean
+}
+
 
 // Per-request options understood by our interceptor.
 type RequestConfig = InternalAxiosRequestConfig & {
@@ -597,6 +847,10 @@ export const api = {
   updateOrganization: (id: number, data: UpdateOrganizationInput) =>
     http.put<void>(`/api/organizations/${id}`, data).then(() => undefined),
 
+  // HR updates the active organization's attendance policy (office hours + tz).
+  updateOrganizationAttendance: (data: AttendanceSettingsInput) =>
+    http.put<void>("/api/organization/attendance", data).then(() => undefined),
+
   // --- Roles & permissions ---
   createRole: (name: string) =>
     http.post("/api/roles", { name }).then((r) => r.data),
@@ -674,4 +928,51 @@ export const api = {
     http
       .get("/api/attendance/export", { params: filters, responseType: "blob" })
       .then((r) => r.data as Blob),
+
+  // --- Leave: typeahead lookups ---
+  lookupLeaveTypes: (search?: string) =>
+    http
+      .get<LeaveTypeLookup[]>("/api/leave-types/lookup", {
+        params: { search: search || undefined },
+      })
+      .then((r) => r.data),
+
+  lookupLeavePolicies: (search?: string) =>
+    http
+      .get<LeavePolicyLookup[]>("/api/leave-policies/lookup", {
+        params: { search: search || undefined },
+      })
+      .then((r) => r.data),
+
+  // --- Leave: requests & workflow ---
+  applyLeave: (data: SaveLeaveRequestInput) =>
+    http.post<LeaveRequestRow>("/api/leave-requests", data).then((r) => r.data),
+
+  reviewLeave: (id: number, approve: boolean, reviewNotes?: string) =>
+    http
+      .post<void>(`/api/leave-requests/${id}/${approve ? "approve" : "reject"}`, {
+        reviewNotes,
+      })
+      .then(() => undefined),
+
+  cancelLeave: (id: number) =>
+    http.post<void>(`/api/leave-requests/${id}/cancel`).then(() => undefined),
+
+  // --- Leave: balances ---
+  myLeaveBalances: (year?: number) =>
+    http
+      .get<LeaveBalanceSummary[]>("/api/leave-balances/mine", {
+        params: year ? { year } : {},
+      })
+      .then((r) => r.data),
+
+  employeeLeaveBalances: (employeeId: number, year?: number) =>
+    http
+      .get<LeaveBalanceSummary[]>(`/api/leave-balances/employee/${employeeId}`, {
+        params: year ? { year } : {},
+      })
+      .then((r) => r.data),
+
+  adjustLeaveBalance: (data: AdjustLeaveBalanceInput) =>
+    http.post<{ id: number }>("/api/leave-balances/adjust", data).then((r) => r.data),
 }

@@ -46,6 +46,12 @@ public class EmployeesController : ApiControllerBase
     public async Task<IActionResult> Lookup([FromQuery] string? search, [FromQuery] int? excludeId) =>
         Ok(await _employees.SearchAsync(search, excludeId));
 
+    // The reporting hierarchy for the org chart (flat node list).
+    [HttpGet("org-chart")]
+    [RequirePermission(Permissions.ViewOrgChart)]
+    public async Task<IActionResult> OrgChart() =>
+        Ok(await _employees.GetOrgChartAsync());
+
     // Users in the tenant that can be linked to a new/edited employee.
     [HttpGet("assignable-users")]
     [RequirePermission(Permissions.CreateEmployees, Permissions.EditEmployees)]
@@ -53,7 +59,7 @@ public class EmployeesController : ApiControllerBase
         Ok(await _employees.AssignableUsersAsync(search, includeUserId));
 
     [HttpGet("{id:int}")]
-    [RequirePermission(Permissions.ViewEmployees)]
+    [RequirePermission(Permissions.ViewEmployees, Permissions.ViewOrgChart)]
     public async Task<IActionResult> GetById(int id)
     {
         var detail = await _employees.GetDetailAsync(id);

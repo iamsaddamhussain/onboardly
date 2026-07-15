@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Briefcase,
   Building2,
+  CalendarClock,
   CalendarDays,
   History,
   IdCard,
@@ -22,14 +23,15 @@ import { Card } from "@/components/ui/card"
 import { AppButton } from "@/components/AppButton"
 import { Avatar } from "@/components/Avatar"
 import { TimelineCard } from "@/components/TimelineCard"
+import { LeaveBalanceCard } from "@/components/LeaveBalanceCard"
 import { useResource } from "@/lib/query"
-import { type AuditLogEntry, type EmployeeDetail } from "@/lib/api"
+import { type AuditLogEntry, type EmployeeDetail, type LeaveBalanceSummary } from "@/lib/api"
 import { useAuthStore } from "@/store/auth-store"
 import { formatLongDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { EmploymentStatusPill } from "@/pages/hr/employment"
 
-type TabKey = "profile" | "employment" | "organization" | "activity"
+type TabKey = "profile" | "employment" | "organization" | "leave" | "activity"
 
 function InfoRow({
   icon: Icon,
@@ -85,6 +87,9 @@ function EmploymentTab({ e, t }: { e: EmployeeDetail; t: TFunction }) {
       <InfoRow icon={CalendarDays} label={t("employeeForm.joiningDate")}>
         {formatLongDate(e.joiningDate)}
       </InfoRow>
+      <InfoRow icon={CalendarClock} label={t("employeeForm.leaveEligible")}>
+        {e.leaveEligible ? t("common.yes") : t("common.no")}
+      </InfoRow>
     </Card>
   )
 }
@@ -116,6 +121,27 @@ function ActivityTab({ id, t }: { id: number; t: TFunction }) {
   )
 }
 
+function LeaveTab({ id, t }: { id: number; t: TFunction }) {
+  const { data } = useResource<LeaveBalanceSummary[]>(`leave-balances/employee/${id}`)
+  const balances = data ?? []
+
+  if (balances.length === 0) {
+    return (
+      <Card className="rounded-none p-6 text-sm text-muted-foreground">
+        {t("employeeProfile.noBalances")}
+      </Card>
+    )
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {balances.map((b) => (
+        <LeaveBalanceCard key={b.leaveTypeId} balance={b} />
+      ))}
+    </div>
+  )
+}
+
 export default function EmployeeProfilePage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -123,6 +149,14 @@ export default function EmployeeProfilePage() {
   const employeeId = id ? Number(id) : null
   const invalidId = employeeId == null || Number.isNaN(employeeId)
   const canEdit = useAuthStore((s) => s.hasPermission("employees.edit"))
+  const canViewActivity = useAuthStore((s) => s.hasPermission("employees.view"))
+  const canViewLeave = useAuthStore((s) =>
+    s.hasPermission("leave.view") ||
+    s.hasPermission("leave.approve") ||
+    s.hasPermission("leave.manage_balances"),
+  )
+  const canViewList = canViewActivity
+  const backTo = canViewList ? "/employees" : "/org-chart"
 
   const [tab, setTab] = useState<TabKey>("profile")
 
@@ -133,14 +167,19 @@ export default function EmployeeProfilePage() {
   )
 
   useEffect(() => {
-    if (invalidId || isError) navigate("/employees", { replace: true })
-  }, [invalidId, isError, navigate])
+    if (invalidId || isError) navigate(backTo, { replace: true })
+  }, [invalidId, isError, navigate, backTo])
 
   const tabs: { key: TabKey; label: string; icon: typeof IdCard }[] = [
     { key: "profile", label: t("employeeProfile.tabs.profile"), icon: UserRound },
     { key: "employment", label: t("employeeProfile.tabs.employment"), icon: Briefcase },
     { key: "organization", label: t("employeeProfile.tabs.organization"), icon: Building2 },
-    { key: "activity", label: t("employeeProfile.tabs.activity"), icon: History },
+    ...(canViewLeave
+      ? [{ key: "leave" as const, label: t("employeeProfile.tabs.leave"), icon: CalendarClock }]
+      : []),
+    ...(canViewActivity
+      ? [{ key: "activity" as const, label: t("employeeProfile.tabs.activity"), icon: History }]
+      : []),
   ]
 
   return (
@@ -150,7 +189,7 @@ export default function EmployeeProfilePage() {
       description={data ? data.employeeNumber : undefined}
       breadcrumbs={[
         { label: t("nav.dashboard"), to: "/dashboard" },
-        { label: t("nav.employees"), to: "/employees" },
+        ...(canViewList ? [{ label: t("nav.employees"), to: "/employees" }] : []),
         { label: data?.fullName ?? t("employeeProfile.title") },
       ]}
       loading={isLoading}
@@ -161,7 +200,7 @@ export default function EmployeeProfilePage() {
               {t("common.edit")}
             </AppButton>
           )}
-          <AppButton variant="outline" icon={ArrowLeft} onClick={() => navigate("/employees")}>
+          <AppButton variant="outline" icon={ArrowLeft} onClick={() => navigate(backTo)}>
             {t("common.back")}
           </AppButton>
         </div>
@@ -204,7 +243,8 @@ export default function EmployeeProfilePage() {
           {tab === "profile" && <ProfileTab e={data} t={t} />}
           {tab === "employment" && <EmploymentTab e={data} t={t} />}
           {tab === "organization" && <OrganizationTab e={data} t={t} />}
-          {tab === "activity" && <ActivityTab id={data.id} t={t} />}
+          {tab === "leave" && canViewLeave && <LeaveTab id={data.id} t={t} />}
+          {tab === "activity" && canViewActivity && <ActivityTab id={data.id} t={t} />}
         </div>
       )}
     </Page>

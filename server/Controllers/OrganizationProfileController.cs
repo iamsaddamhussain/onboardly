@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Onboardly.Server.Authorization;
 using Onboardly.Server.Dtos;
+using Onboardly.Server.Models;
 using Onboardly.Server.Repositories;
 using Onboardly.Server.Services;
 
@@ -39,11 +40,61 @@ public class OrganizationProfileController : ApiControllerBase
         if (org is null)
             return NotFound(new { message = "Organization not found." });
 
+        var entity = await _organizations.GetByIdAsync(organizationId);
         var activity = await _audit.GetRecentForOrganizationAsync(organizationId);
 
         return Ok(new OrganizationProfileResponse(
             org.Id, org.Name, org.Slug, org.IsActive, org.SubscriptionTier,
-            org.CreatedAt, org.UserCount, activity));
+            org.CreatedAt, org.UserCount, activity,
+            entity?.TimeZone ?? "UTC",
+            (entity?.WorkDays ?? WorkDays.Weekdays).ToNames(),
+            entity?.WorkdayStart ?? new TimeOnly(9, 0),
+            entity?.WorkdayEnd ?? new TimeOnly(18, 0),
+            entity?.BreakMinutes ?? 60,
+            entity?.FlagMissingPunches ?? true));
+    }
+
+    // HR updates the organization's attendance policy (time zone + office hours)
+    // that drives the auto-checkout sweep.
+    [HttpPut("attendance")]
+    [RequirePermission(Permissions.ManageUsers)]
+    public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceSettingsRequest request)
+    {
+        if (_tenant.OrganizationId is not int organizationId)
+            return NoContent();
+
+        var organization = await _organizations.GetByIdAsync(organizationId);
+        if (organization is null)
+            return NotFound(new { message = "Organization not found." });
+
+        // The time zone must be one the server can resolve, or the sweep can't
+        // compute the office close time.
+        if (!TimeZoneExists(request.TimeZone))
+        {
+            ModelState.AddModelError(nameof(request.TimeZone), "Unknown time zone.");
+            return ValidationProblem(ModelState);
+        }
+        if (request.WorkdayEnd <= request.WorkdayStart)
+        {
+            ModelState.AddModelError(nameof(request.WorkdayEnd), "Office close must be after office start.");
+            return ValidationProblem(ModelState);
+        }
+
+        await _organizations.UpdateAttendanceSettings(organization, request);
+        return NoContent();
+    }
+
+    private static bool TimeZoneExists(string id)
+    {
+        try
+        {
+            TimeZoneInfo.FindSystemTimeZoneById(id);
+            return true;
+        }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            return false;
+        }
     }
 
     // Daily activity counts for the active organization's contribution heatmap

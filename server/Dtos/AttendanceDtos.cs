@@ -16,6 +16,8 @@ public record AttendanceListItem(
     int WorkedMinutes,
     int BreakMinutes,
     int OvertimeMinutes,
+    int LateMinutes,
+    int EarlyLeaveMinutes,
     string Status,
     string? Remarks
 );
@@ -42,6 +44,8 @@ public record AttendanceDetail(
     int WorkedMinutes,
     int BreakMinutes,
     int OvertimeMinutes,
+    int LateMinutes,
+    int EarlyLeaveMinutes,
     string Status,
     string? Remarks,
     IReadOnlyList<AttendanceEventItem> Events

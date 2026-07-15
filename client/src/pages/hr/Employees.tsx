@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Eye, Pencil, Plus, UsersRound } from "lucide-react"
+import { Eye, LogIn, Pencil, Plus, UsersRound } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { TFunction } from "i18next"
 
@@ -25,7 +25,15 @@ import { useAuthStore } from "@/store/auth-store"
 import { formatDate } from "@/lib/format"
 import { EmploymentStatusPill } from "@/pages/hr/employment"
 
-function buildColumns(t: TFunction, canEdit: boolean) {
+function buildColumns(
+  t: TFunction,
+  canEdit: boolean,
+  options: {
+    canImpersonate: boolean
+    currentUserId?: number
+    onImpersonate: (row: EmployeeRow) => void
+  },
+) {
   return [
     column<EmployeeRow>("employeeNumber", t("employees.columns.number"))
       .sortOn("employeeNumber")
@@ -70,6 +78,15 @@ function buildColumns(t: TFunction, canEdit: boolean) {
               {t("common.edit")}
             </ActionButton>
           )}
+          {options.canImpersonate && row.userId !== options.currentUserId && (
+            <ActionButton
+              tone="primary"
+              icon={LogIn}
+              onClick={() => options.onImpersonate(row)}
+            >
+              {t("users.impersonate")}
+            </ActionButton>
+          )}
         </div>
       )),
   ]
@@ -79,8 +96,11 @@ export default function EmployeesPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const hasPermission = useAuthStore((s) => s.hasPermission)
+  const currentUser = useAuthStore((s) => s.user)
+  const impersonate = useAuthStore((s) => s.impersonate)
   const canCreate = hasPermission("employees.create")
   const canEdit = hasPermission("employees.edit")
+  const canImpersonate = hasPermission("impersonate_users")
 
   const [department, setDepartment] = useState<DepartmentLookup | null>(null)
   const [jobTitle, setJobTitle] = useState<JobTitleLookup | null>(null)
@@ -89,7 +109,18 @@ export default function EmployeesPage() {
   const [from, setFrom] = useState<string>("")
   const [to, setTo] = useState<string>("")
 
-  const columns = useMemo(() => buildColumns(t, canEdit), [t, canEdit])
+  const columns = useMemo(
+    () =>
+      buildColumns(t, canEdit, {
+        canImpersonate,
+        currentUserId: currentUser?.id,
+        onImpersonate: async (row) => {
+          await impersonate(row.userId)
+          navigate("/dashboard", { replace: true })
+        },
+      }),
+    [t, canEdit, canImpersonate, currentUser?.id, impersonate, navigate],
+  )
 
   const sendData = useMemo(() => {
     const filters: Record<string, unknown> = {}

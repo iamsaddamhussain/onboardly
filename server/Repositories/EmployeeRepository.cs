@@ -89,6 +89,7 @@ public class EmployeeRepository : IEmployeeRepository
                 e.JoiningDate,
                 e.EmploymentStatus.ToString(),
                 e.EmploymentType.ToString(),
+                e.LeaveEligible,
                 e.WorkEmail,
                 e.WorkPhone,
                 e.CreatedAt,
@@ -108,7 +109,8 @@ public class EmployeeRepository : IEmployeeRepository
             query = query.Where(e =>
                 EF.Functions.ILike(e.EmployeeNumber, like) ||
                 EF.Functions.ILike(e.User.FirstName, like) ||
-                EF.Functions.ILike(e.User.LastName, like));
+                EF.Functions.ILike(e.User.LastName, like) ||
+                EF.Functions.ILike(e.User.Email, like));
         }
 
         return await query
@@ -178,6 +180,7 @@ public class EmployeeRepository : IEmployeeRepository
                 e.JoiningDate,
                 e.EmploymentStatus.ToString(),
                 e.EmploymentType.ToString(),
+                e.LeaveEligible,
                 e.WorkEmail,
                 e.WorkPhone,
                 e.Notes,
@@ -193,6 +196,20 @@ public class EmployeeRepository : IEmployeeRepository
 
     public Task<bool> UserInTenantAsync(int userId) =>
         _db.Users.AnyAsync(u => u.Id == userId && u.OrganizationId == _tenant.OrganizationId);
+
+    public async Task<IReadOnlyList<OrgChartNode>> GetOrgChartAsync() =>
+        await _db.Employees
+            .OrderBy(e => e.User.FirstName).ThenBy(e => e.User.LastName)
+            .Select(e => new OrgChartNode(
+                e.Id,
+                e.EmployeeNumber,
+                e.User.FirstName + " " + e.User.LastName,
+                e.JobTitle != null ? e.JobTitle.Name : null,
+                e.Department != null ? e.Department.Name : null,
+                e.EmploymentStatus.ToString(),
+                e.ReportingManagerId,
+                e.UserId))
+            .ToListAsync();
 
     public async Task<Employee> Create(SaveEmployeeRequest request)
     {
@@ -229,6 +246,7 @@ public class EmployeeRepository : IEmployeeRepository
         employee.JoiningDate = DateTime.SpecifyKind(request.JoiningDate, DateTimeKind.Utc);
         employee.EmploymentStatus = Enum.Parse<EmploymentStatus>(request.EmploymentStatus, ignoreCase: true);
         employee.EmploymentType = Enum.Parse<EmploymentType>(request.EmploymentType, ignoreCase: true);
+        employee.LeaveEligible = request.LeaveEligible;
         employee.WorkEmail = string.IsNullOrWhiteSpace(request.WorkEmail) ? null : request.WorkEmail.Trim().ToLowerInvariant();
         employee.WorkPhone = string.IsNullOrWhiteSpace(request.WorkPhone) ? null : request.WorkPhone.Trim();
         employee.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();

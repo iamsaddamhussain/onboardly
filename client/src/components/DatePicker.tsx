@@ -1,4 +1,5 @@
 import { CalendarIcon, X } from "lucide-react"
+import { useState } from "react"
 import dayjs from "dayjs"
 import { useTranslation } from "react-i18next"
 
@@ -56,9 +57,10 @@ export function DatePicker({
 }: DatePickerProps) {
   const { t } = useTranslation()
   const selected = fromKey(value)
+  const [open, setOpen] = useState(false)
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <div className={cn("relative", className)}>
         <PopoverTrigger
           id={id}
@@ -103,7 +105,10 @@ export function DatePicker({
             ...(min ? [{ before: fromKey(min)! }] : []),
             ...(max ? [{ after: fromKey(max)! }] : []),
           ]}
-          onSelect={(date) => onChange(date ? toKey(date) : "")}
+          onSelect={(date) => {
+            onChange(date ? toKey(date) : "")
+            setOpen(false)
+          }}
         />
       </PopoverContent>
     </Popover>

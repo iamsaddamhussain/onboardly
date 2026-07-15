@@ -15,6 +15,7 @@ export type FormInputType =
   | "number"
   | "tel"
   | "url"
+  | "date"
   | "textarea"
 
 interface FormInputProps {

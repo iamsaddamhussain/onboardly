@@ -5,13 +5,13 @@ import type { TFunction } from "i18next"
 
 import { Page } from "@/components/Page"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AppButton } from "@/components/AppButton"
 import { FormSection } from "@/components/FormSection"
 import { FormInput } from "@/components/FormInput"
 import { FormSelect } from "@/components/FormSelect"
 import { DatePicker } from "@/components/DatePicker"
+import { TimePicker } from "@/components/TimePicker"
 import { DataTable } from "@/components/datatable/DataTable"
 import { column } from "@/components/datatable/column"
 import { useResource, useResourceMutation } from "@/lib/query"
@@ -24,13 +24,11 @@ import {
   type CorrectionRow,
   type MyAttendanceToday,
 } from "@/lib/api"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatMinutes, formatTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import {
   AttendanceStatusPill,
   CorrectionStatusPill,
-  formatMinutes,
-  formatTime,
 } from "@/pages/hr/attendance-helpers"
 
 function historyColumns(t: TFunction) {
@@ -292,22 +290,18 @@ export default function MyAttendancePage() {
               />
               <div className="flex flex-col gap-2">
                 <Label htmlFor="c-in">{t("attendanceForm.checkIn")}</Label>
-                <Input
+                <TimePicker
                   id="c-in"
-                  type="time"
                   value={form.checkInTime}
-                  onChange={(e) => setForm((p) => ({ ...p, checkInTime: e.target.value }))}
-                  className="rounded-none"
+                  onChange={(v) => setForm((p) => ({ ...p, checkInTime: v }))}
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="c-out">{t("attendanceForm.checkOut")}</Label>
-                <Input
+                <TimePicker
                   id="c-out"
-                  type="time"
                   value={form.checkOutTime}
-                  onChange={(e) => setForm((p) => ({ ...p, checkOutTime: e.target.value }))}
-                  className="rounded-none"
+                  onChange={(v) => setForm((p) => ({ ...p, checkOutTime: v }))}
                 />
               </div>
             </div>

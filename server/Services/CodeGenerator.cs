@@ -13,6 +13,8 @@ public interface ICodeGenerator
     Task<string> NextEmployeeNumberAsync();
     Task<string> NextDepartmentCodeAsync();
     Task<string> NextJobTitleCodeAsync();
+    Task<string> NextLeaveTypeCodeAsync();
+    Task<string> NextLeavePolicyCodeAsync();
 }
 
 public class CodeGenerator : ICodeGenerator
@@ -49,6 +51,22 @@ public class CodeGenerator : ICodeGenerator
             countAsync: orgId => _db.JobTitles.IgnoreQueryFilters().CountAsync(j => j.OrganizationId == orgId),
             existsAsync: (orgId, code) => _db.JobTitles.IgnoreQueryFilters()
                 .AnyAsync(j => j.OrganizationId == orgId && j.Code == code));
+
+    public Task<string> NextLeaveTypeCodeAsync() =>
+        NextAsync(
+            "LVT",
+            padding: 3,
+            countAsync: orgId => _db.LeaveTypes.IgnoreQueryFilters().CountAsync(t => t.OrganizationId == orgId),
+            existsAsync: (orgId, code) => _db.LeaveTypes.IgnoreQueryFilters()
+                .AnyAsync(t => t.OrganizationId == orgId && t.Code == code));
+
+    public Task<string> NextLeavePolicyCodeAsync() =>
+        NextAsync(
+            "LVP",
+            padding: 3,
+            countAsync: orgId => _db.LeavePolicies.IgnoreQueryFilters().CountAsync(p => p.OrganizationId == orgId),
+            existsAsync: (orgId, code) => _db.LeavePolicies.IgnoreQueryFilters()
+                .AnyAsync(p => p.OrganizationId == orgId && p.Code == code));
 
     // Builds "{PREFIX}-{KIND}-{seq}" and increments until the value is free.
     private async Task<string> NextAsync(

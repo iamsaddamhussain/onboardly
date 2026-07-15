@@ -21,12 +21,8 @@ import {
   type EmployeeLookup,
 } from "@/lib/api"
 import { useAuthStore } from "@/store/auth-store"
-import { formatDate } from "@/lib/format"
-import {
-  AttendanceStatusPill,
-  formatMinutes,
-  formatTime,
-} from "@/pages/hr/attendance-helpers"
+import { formatDate, formatMinutes, formatTime } from "@/lib/format"
+import { AttendanceStatusPill } from "@/pages/hr/attendance-helpers"
 
 function buildColumns(t: TFunction, canEdit: boolean) {
   return [
@@ -61,6 +57,14 @@ function buildColumns(t: TFunction, canEdit: boolean) {
       .sortOn("overtime")
       .muted()
       .format((value) => formatMinutes(value as number)),
+    column<AttendanceRow>("lateMinutes", t("attendance.columns.late"))
+      .unsortable()
+      .muted()
+      .format((value) => ((value as number) > 0 ? formatMinutes(value as number) : t("common.dash"))),
+    column<AttendanceRow>("earlyLeaveMinutes", t("attendance.columns.earlyExit"))
+      .unsortable()
+      .muted()
+      .format((value) => ((value as number) > 0 ? formatMinutes(value as number) : t("common.dash"))),
     column<AttendanceRow>("status", t("attendance.columns.status"))
       .sortOn("status")
       .render((_, row) => <AttendanceStatusPill status={row.status} />),

@@ -23,6 +23,11 @@ public class AttendanceRecord : IEntity, IOrgOwned, ISoftDeletable
     public int WorkedMinutes { get; set; }
     public int BreakMinutes { get; set; }
     public int OvertimeMinutes { get; set; }
+    // Minutes late vs the scheduled start, and minutes left before scheduled end.
+    // Derived from the actual punches against the org schedule; punches are never
+    // altered to "fix" these.
+    public int LateMinutes { get; set; }
+    public int EarlyLeaveMinutes { get; set; }
 
     public AttendanceStatus Status { get; set; } = AttendanceStatus.Present;
     public string? Remarks { get; set; }

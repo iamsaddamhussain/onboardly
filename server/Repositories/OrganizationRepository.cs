@@ -93,4 +93,15 @@ public class OrganizationRepository : IOrganizationRepository
             : request.SubscriptionTier.Trim();
         await _db.SaveChangesAsync();
     }
+
+    public async Task UpdateAttendanceSettings(Organization organization, UpdateAttendanceSettingsRequest request)
+    {
+        organization.TimeZone = request.TimeZone.Trim();
+        organization.WorkDays = WorkDaysExtensions.FromNames(request.WorkDays);
+        organization.WorkdayStart = request.WorkdayStart;
+        organization.WorkdayEnd = request.WorkdayEnd;
+        organization.BreakMinutes = request.BreakMinutes;
+        organization.FlagMissingPunches = request.FlagMissingPunches;
+        await _db.SaveChangesAsync();
+    }
 }

@@ -10,6 +10,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react"
+import { createPortal } from "react-dom"
 import { ChevronDown, Loader2, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -67,9 +68,15 @@ export function ServersideLookup<T>({
 
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLUListElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   // Guards against out-of-order responses overwriting a newer search.
   const queryIdRef = useRef(0)
+  // Fixed position for the portal-rendered dropdown so it is never clipped by an
+  // ancestor's overflow (e.g. the Page wrapper).
+  const [menuRect, setMenuRect] = useState<{ top: number; left: number; width: number } | null>(
+    null,
+  )
 
   const getVal = (item: T) => (item as Option)[optionValue]
   const labelOf = (item: T) => {
@@ -93,7 +100,11 @@ export function ServersideLookup<T>({
   // Close the dropdown when clicking outside the component.
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (
+        !containerRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
         setOpen(false)
         setFocused(false)
       }
@@ -101,6 +112,23 @@ export function ServersideLookup<T>({
     document.addEventListener("mousedown", onDocMouseDown)
     return () => document.removeEventListener("mousedown", onDocMouseDown)
   }, [])
+
+  // Track the trigger's viewport position so the portal dropdown stays anchored
+  // while open (on scroll/resize).
+  useEffect(() => {
+    if (!open) return
+    const update = () => {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (rect) setMenuRect({ top: rect.bottom, left: rect.left, width: rect.width })
+    }
+    update()
+    window.addEventListener("scroll", update, true)
+    window.addEventListener("resize", update)
+    return () => {
+      window.removeEventListener("scroll", update, true)
+      window.removeEventListener("resize", update)
+    }
+  }, [open])
 
   useEffect(() => () => clearTimeout(debounceRef.current), [])
 
@@ -263,12 +291,20 @@ export function ServersideLookup<T>({
         )}
       </div>
 
-      {open && (
-        <ul
-          id={id ? `${id}-listbox` : undefined}
-          role="listbox"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto border bg-popover text-popover-foreground shadow-md"
-        >
+      {open && menuRect &&
+        createPortal(
+          <ul
+            ref={menuRef}
+            id={id ? `${id}-listbox` : undefined}
+            role="listbox"
+            style={{
+              position: "fixed",
+              top: menuRect.top + 4,
+              left: menuRect.left,
+              width: menuRect.width,
+            }}
+            className="z-50 max-h-60 overflow-auto border bg-popover text-popover-foreground shadow-md"
+          >
           {options.length === 0 ? (
             <li className="px-3 py-2 text-sm text-muted-foreground">
               {loading ? t("lookup.searching") : t("lookup.noResults")}
@@ -301,8 +337,9 @@ export function ServersideLookup<T>({
               )
             })
           )}
-        </ul>
-      )}
+          </ul>,
+          document.body,
+        )}
     </div>
   )
 }

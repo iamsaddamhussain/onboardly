@@ -102,6 +102,14 @@ public class RoleRepository : IRoleRepository
         await _db.SaveChangesAsync();
     }
 
+    public async Task<IReadOnlyList<int>> GetUserIds(int roleId)
+    {
+        return await _db.Users
+            .Where(u => u.Roles.Any(r => r.Id == roleId))
+            .Select(u => u.Id)
+            .ToListAsync();
+    }
+
     public async Task Delete(Role role)
     {
         _db.Roles.Remove(role);

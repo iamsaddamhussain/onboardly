@@ -28,3 +28,16 @@ export function formatLongDate(iso: string) {
 export function formatDateTime(iso: string) {
   return dayjs(iso).format("lll")
 }
+
+// Render a minutes total as "8h 30m" (or "0m").
+export function formatMinutes(minutes: number): string {
+  if (!minutes || minutes <= 0) return "0m"
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return [h ? `${h}h` : null, m ? `${m}m` : null].filter(Boolean).join(" ") || "0m"
+}
+
+// Render an ISO timestamp as a local wall-clock time, e.g. "09:15".
+export function formatTime(iso: string | null): string {
+  return iso ? dayjs(iso).format("HH:mm") : "—"
+}

@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next"
-import dayjs from "dayjs"
 
 import { cn } from "@/lib/utils"
 import type { AttendanceStatus, CorrectionStatus } from "@/lib/api"
@@ -15,6 +14,7 @@ const STATUS_TONE: Record<AttendanceStatus, string> = {
   Weekend: "text-muted-foreground before:bg-muted-foreground/50",
   WorkFromHome: "text-teal-500 before:bg-teal-500",
   OnDuty: "text-indigo-500 before:bg-indigo-500",
+  MissingPunch: "text-rose-500 before:bg-rose-500",
 }
 
 export function AttendanceStatusPill({ status }: { status: AttendanceStatus }) {
@@ -51,17 +51,4 @@ export function CorrectionStatusPill({ status }: { status: CorrectionStatus }) {
       {t(`correctionStatus.${status}`)}
     </span>
   )
-}
-
-// Render a minutes total as "8h 30m" (or "0m").
-export function formatMinutes(minutes: number): string {
-  if (!minutes || minutes <= 0) return "0m"
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return [h ? `${h}h` : null, m ? `${m}m` : null].filter(Boolean).join(" ") || "0m"
-}
-
-// Render an ISO timestamp as a local wall-clock time, e.g. "09:15".
-export function formatTime(iso: string | null): string {
-  return iso ? dayjs(iso).format("HH:mm") : "—"
 }

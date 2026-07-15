@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Onboardly.Server.Authorization;
 using Onboardly.Server.Data;
 using Onboardly.Server.Dtos;
+using Onboardly.Server.Infrastructure;
 using Onboardly.Server.Models;
 using Onboardly.Server.Repositories;
 
@@ -31,24 +33,53 @@ public interface IAttendanceService
 
     Task<AttendanceCorrection> RequestCorrectionAsync(SaveCorrectionRequest request, bool onBehalf);
     Task<bool> ReviewCorrectionAsync(int id, bool approve, string? reviewNotes);
+
+    // Flags every open day (checked in, never checked out) whose office close
+    // time has passed as MissingPunch for HR review. Never fills in the actual
+    // times. Runs unattended (no request/tenant context) as a scheduled sweep
+    // across all tenants. Returns the number of records flagged.
+    Task<int> FlagMissingPunchesAsync();
 }
 
 public class AttendanceService : IAttendanceService
 {
-    // Placeholder policy values until the shift/holiday/policy engine lands.
-    private const int StandardWorkMinutes = 8 * 60;
-    private static readonly TimeOnly LateThreshold = new(9, 15);
-
     private readonly AppDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly IEmployeeRepository _employees;
+    private readonly AttendanceOptions _options;
+    private readonly ILogger<AttendanceService> _logger;
 
-    public AttendanceService(AppDbContext db, ITenantContext tenant, IEmployeeRepository employees)
+    public AttendanceService(
+        AppDbContext db,
+        ITenantContext tenant,
+        IEmployeeRepository employees,
+        IOptions<AttendanceOptions> options,
+        ILogger<AttendanceService> logger)
     {
         _db = db;
         _tenant = tenant;
         _employees = employees;
+        _options = options.Value;
+        _logger = logger;
     }
+
+    // The effective work schedule used by the attendance engine. Loaded from the
+    // organization; a safe default is used when none is resolvable.
+    private readonly record struct WorkPolicy(
+        TimeZoneInfo Zone, TimeOnly Start, TimeOnly End, int BreakMinutes, WorkDays Days);
+
+    private async Task<WorkPolicy> CurrentPolicyAsync()
+    {
+        var org = _tenant.OrganizationId is int id ? await _db.Organizations.FindAsync(id) : null;
+        return PolicyFrom(org);
+    }
+
+    private WorkPolicy PolicyFrom(Organization? org) =>
+        org is null
+            ? new WorkPolicy(TimeZoneInfo.Utc, new(9, 0), new(18, 0), 60, WorkDays.Weekdays)
+            : new WorkPolicy(ResolveTimeZone(org.TimeZone), org.WorkdayStart, org.WorkdayEnd,
+                org.BreakMinutes, org.WorkDays);
+
 
     public async Task<MyAttendanceToday> GetMyTodayAsync()
     {
@@ -85,6 +116,7 @@ public class AttendanceService : IAttendanceService
     public async Task<AttendanceDetail> CheckInAsync(PunchRequest request)
     {
         var employee = await CurrentEmployeeAsync();
+        var policy = await CurrentPolicyAsync();
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
         var record = await TrackedRecordAsync(employee.Id, today);
@@ -101,15 +133,18 @@ public class AttendanceService : IAttendanceService
         }
 
         record.CheckInAt = now;
-        // Auto-classify late arrivals; leave explicit HR statuses (leave/holiday…)
-        // untouched if they were pre-set.
+        // Auto-classify late arrivals against the scheduled start; leave explicit
+        // HR statuses (leave/holiday…) untouched if they were pre-set.
         if (record.Status is AttendanceStatus.Present or AttendanceStatus.Absent or AttendanceStatus.Late)
-            record.Status = TimeOnly.FromDateTime(now) > LateThreshold
+        {
+            var localIn = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(now, policy.Zone));
+            record.Status = localIn.ToTimeSpan() > policy.Start.ToTimeSpan()
                 ? AttendanceStatus.Late
                 : AttendanceStatus.Present;
+        }
 
         AddEvent(record, AttendanceEventType.CheckIn, now, request);
-        Recompute(record);
+        Recompute(record, policy);
         await _db.SaveChangesAsync();
         return await DetailAsync(record.Id);
     }
@@ -117,6 +152,7 @@ public class AttendanceService : IAttendanceService
     public async Task<AttendanceDetail> CheckOutAsync(PunchRequest request)
     {
         var (record, now) = await RequireOpenRecordAsync();
+        var policy = await CurrentPolicyAsync();
 
         // Close any dangling break so break time is accounted for at checkout.
         if (IsOnBreak(record))
@@ -124,7 +160,7 @@ public class AttendanceService : IAttendanceService
 
         record.CheckOutAt = now;
         AddEvent(record, AttendanceEventType.CheckOut, now, request);
-        Recompute(record);
+        Recompute(record, policy);
         await _db.SaveChangesAsync();
         return await DetailAsync(record.Id);
     }
@@ -147,7 +183,7 @@ public class AttendanceService : IAttendanceService
             throw new AttendanceException("You are not currently on a break.");
 
         AddEvent(record, AttendanceEventType.BreakEnd, now, request);
-        Recompute(record);
+        Recompute(record, await CurrentPolicyAsync());
         await _db.SaveChangesAsync();
         return await DetailAsync(record.Id);
     }
@@ -165,7 +201,7 @@ public class AttendanceService : IAttendanceService
         record.BreakMinutes = request.BreakMinutes;
         record.Status = status;
         record.Remarks = string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim();
-        RecomputeTotals(record);
+        RecomputeTotals(record, await CurrentPolicyAsync());
 
         await _db.SaveChangesAsync();
         return record.Id;
@@ -236,6 +272,58 @@ public class AttendanceService : IAttendanceService
         return true;
     }
 
+    public async Task<int> FlagMissingPunchesAsync()
+    {
+        var grace = TimeSpan.FromMinutes(Math.Max(0, _options.AutoCheckoutGraceMinutes));
+        var nowUtc = DateTime.UtcNow;
+
+        // Open days across every tenant. The sweep runs without a request tenant
+        // context, so bypass the tenant/soft-delete query filters and scope by
+        // hand (only live, still-open records not already flagged).
+        var open = await _db.AttendanceRecords
+            .IgnoreQueryFilters()
+            .Where(a => !a.IsDeleted
+                && a.CheckInAt != null
+                && a.CheckOutAt == null
+                && a.Status != AttendanceStatus.MissingPunch)
+            .ToListAsync();
+
+        if (open.Count == 0)
+            return 0;
+
+        // Each record's office hours/time zone come from its own organization.
+        var orgIds = open.Select(a => a.OrganizationId).Distinct().ToList();
+        var orgs = await _db.Organizations
+            .IgnoreQueryFilters()
+            .Where(o => orgIds.Contains(o.Id))
+            .ToDictionaryAsync(o => o.Id);
+
+        var flagged = 0;
+        foreach (var record in open)
+        {
+            if (!orgs.TryGetValue(record.OrganizationId, out var org) || !org.FlagMissingPunches)
+                continue;
+
+            var tz = ResolveTimeZone(org.TimeZone);
+            var localNow = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
+
+            // Only once the office has closed for that record's own calendar day.
+            var closeLocal = record.Date.ToDateTime(org.WorkdayEnd).Add(grace);
+            if (localNow < closeLocal)
+                continue;
+
+            // Flag for HR review — never fabricate the actual check-out time.
+            record.Status = AttendanceStatus.MissingPunch;
+            flagged++;
+        }
+
+        if (flagged > 0)
+            await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Attendance sweep flagged {Count} missing-punch record(s).", flagged);
+        return flagged;
+    }
+
     // --- helpers ---
 
     // Apply an approved correction's requested values onto the day's record,
@@ -251,7 +339,7 @@ public class AttendanceService : IAttendanceService
         if (correction.RequestedStatus is AttendanceStatus status)
             record.Status = status;
 
-        RecomputeTotals(record);
+        RecomputeTotals(record, await CurrentPolicyAsync());
         correction.AttendanceRecordId = record.Id;
     }
 
@@ -316,6 +404,19 @@ public class AttendanceService : IAttendanceService
         });
     }
 
+    private TimeZoneInfo ResolveTimeZone(string id)
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(id);
+        }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            _logger.LogWarning("Attendance time zone '{TimeZone}' not found; falling back to UTC.", id);
+            return TimeZoneInfo.Utc;
+        }
+    }
+
     private static bool IsOnBreak(AttendanceRecord record)
     {
         var last = record.Events
@@ -335,26 +436,50 @@ public class AttendanceService : IAttendanceService
         return last?.Type == AttendanceEventType.BreakStart ? last.OccurredAt : null;
     }
 
-    // Recompute break/worked/overtime from the punch timeline.
-    private static void Recompute(AttendanceRecord record)
+    // Recompute break/worked/overtime/late/early from the punch timeline. Actual
+    // punch times are never mutated — only the derived figures are updated.
+    private static void Recompute(AttendanceRecord record, WorkPolicy policy)
     {
         record.BreakMinutes = SumBreakMinutes(record);
-        RecomputeTotals(record);
+        RecomputeTotals(record, policy);
     }
 
-    // Recompute worked/overtime from check in/out and the current break total.
-    private static void RecomputeTotals(AttendanceRecord record)
+    // Derive late/early-exit/worked/overtime from the actual check in/out against
+    // the schedule. Late/early are measured against the scheduled window; worked
+    // is gross minus break; overtime is worked beyond the scheduled work minutes.
+    private static void RecomputeTotals(AttendanceRecord record, WorkPolicy policy)
     {
+        var startMinutes = policy.Start.ToTimeSpan().TotalMinutes;
+        var endMinutes = policy.End.ToTimeSpan().TotalMinutes;
+
+        // Late: how far past scheduled start the actual check-in was (local time).
+        if (record.CheckInAt is DateTime cin)
+        {
+            var localIn = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(cin, policy.Zone));
+            record.LateMinutes = Math.Max(0, (int)(localIn.ToTimeSpan().TotalMinutes - startMinutes));
+        }
+        else
+        {
+            record.LateMinutes = 0;
+        }
+
         if (record.CheckInAt is DateTime start && record.CheckOutAt is DateTime end && end > start)
         {
             var gross = (int)(end - start).TotalMinutes;
             record.WorkedMinutes = Math.Max(0, gross - record.BreakMinutes);
-            record.OvertimeMinutes = Math.Max(0, record.WorkedMinutes - StandardWorkMinutes);
+
+            var scheduledWork = Math.Max(0, (int)(endMinutes - startMinutes) - policy.BreakMinutes);
+            record.OvertimeMinutes = Math.Max(0, record.WorkedMinutes - scheduledWork);
+
+            // Early exit: how far before scheduled end the actual check-out was.
+            var localOut = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(end, policy.Zone));
+            record.EarlyLeaveMinutes = Math.Max(0, (int)(endMinutes - localOut.ToTimeSpan().TotalMinutes));
         }
         else
         {
             record.WorkedMinutes = 0;
             record.OvertimeMinutes = 0;
+            record.EarlyLeaveMinutes = 0;
         }
     }
 
@@ -395,6 +520,8 @@ public class AttendanceService : IAttendanceService
                 a.WorkedMinutes,
                 a.BreakMinutes,
                 a.OvertimeMinutes,
+                a.LateMinutes,
+                a.EarlyLeaveMinutes,
                 a.Status.ToString(),
                 a.Remarks,
                 a.Events

@@ -96,6 +96,9 @@ public class UserSessionService : IUserSessionService
             ? await OrganizationNameAsync(activeId)
             : null;
 
+        var canUseLeave = await _db.Employees
+            .AnyAsync(e => e.UserId == user.Id && e.LeaveEligible);
+
         return new UserResponse(
             user.Id,
             user.Email,
@@ -109,7 +112,8 @@ public class UserSessionService : IUserSessionService
             user.OrganizationId,
             organizationName,
             activeOrganizationId,
-            activeOrganizationName);
+            activeOrganizationName,
+            canUseLeave);
     }
 
     private Task<string?> OrganizationNameAsync(int organizationId) =>

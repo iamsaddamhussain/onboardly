@@ -33,6 +33,9 @@ public interface IEmployeeRepository
 
     Task<EmployeeDetail?> GetDetailAsync(int id);
 
+    // The full reporting hierarchy for the tenant, as a flat node list.
+    Task<IReadOnlyList<OrgChartNode>> GetOrgChartAsync();
+
     Task<bool> ExistsAsync(int id);
 
     Task<bool> UserLinkedAsync(int userId, int? excludeId = null);

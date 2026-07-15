@@ -50,6 +50,8 @@ public class AttendanceRepository : IAttendanceRepository
                 a.WorkedMinutes,
                 a.BreakMinutes,
                 a.OvertimeMinutes,
+                a.LateMinutes,
+                a.EarlyLeaveMinutes,
                 a.Status.ToString(),
                 a.Remarks));
 
@@ -68,6 +70,8 @@ public class AttendanceRepository : IAttendanceRepository
                 a.WorkedMinutes,
                 a.BreakMinutes,
                 a.OvertimeMinutes,
+                a.LateMinutes,
+                a.EarlyLeaveMinutes,
                 a.Status.ToString(),
                 a.Remarks,
                 a.Events
@@ -93,6 +97,8 @@ public class AttendanceRepository : IAttendanceRepository
                 a.WorkedMinutes,
                 a.BreakMinutes,
                 a.OvertimeMinutes,
+                a.LateMinutes,
+                a.EarlyLeaveMinutes,
                 a.Status.ToString(),
                 a.Remarks))
             .ToListAsync();

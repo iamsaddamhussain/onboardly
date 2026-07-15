@@ -43,6 +43,11 @@ public class Employee : IEntity, IOrgOwned, ISoftDeletable
     public int? JobTitleId { get; set; }
     public JobTitle? JobTitle { get; set; }
 
+    // The leave policy this employee inherits (entitlements, accrual, rules).
+    // Null falls back to the tenant's default policy when one is configured.
+    public int? LeavePolicyId { get; set; }
+    public LeavePolicy? LeavePolicy { get; set; }
+
     // Self-referencing reporting line; optional (e.g. top of the org).
     public int? ReportingManagerId { get; set; }
     public Employee? ReportingManager { get; set; }
@@ -51,6 +56,10 @@ public class Employee : IEntity, IOrgOwned, ISoftDeletable
     public DateTime JoiningDate { get; set; }
     public EmploymentStatus EmploymentStatus { get; set; } = EmploymentStatus.Active;
     public EmploymentType EmploymentType { get; set; } = EmploymentType.FullTime;
+
+    // HR-controlled gate: only leave-eligible employees can use the leave system
+    // (contractual/temporary staff are typically not eligible). Defaults to off.
+    public bool LeaveEligible { get; set; }
 
     public string? WorkEmail { get; set; }
     public string? WorkPhone { get; set; }

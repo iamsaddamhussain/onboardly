@@ -29,6 +29,14 @@ public class AppDbContext : DbContext
     public DbSet<AttendanceEvent> AttendanceEvents => Set<AttendanceEvent>();
     public DbSet<AttendanceCorrection> AttendanceCorrections => Set<AttendanceCorrection>();
 
+    // --- Leave module ---
+    public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
+    public DbSet<LeavePolicy> LeavePolicies => Set<LeavePolicy>();
+    public DbSet<LeavePolicyLeaveType> LeavePolicyLeaveTypes => Set<LeavePolicyLeaveType>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<LeaveBalanceTransaction> LeaveBalanceTransactions => Set<LeaveBalanceTransaction>();
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+
     public override int SaveChanges()
     {
         StampTimestamps();
@@ -56,6 +64,11 @@ public class AppDbContext : DbContext
         StampUpdatedAt<Employee>(e => e.UpdatedAt = DateTime.UtcNow);
         StampUpdatedAt<AttendanceRecord>(e => e.UpdatedAt = DateTime.UtcNow);
         StampUpdatedAt<AttendanceCorrection>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<LeaveType>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<LeavePolicy>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<LeavePolicyLeaveType>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<LeaveRequest>(e => e.UpdatedAt = DateTime.UtcNow);
+        StampUpdatedAt<Holiday>(e => e.UpdatedAt = DateTime.UtcNow);
 
         // Stamp the active tenant onto new tenant-owned rows so callers never
         // have to set OrganizationId by hand (defense against cross-tenant writes).
@@ -131,6 +144,7 @@ public class AppDbContext : DbContext
             entity.Property(o => o.Name).IsRequired().HasMaxLength(200);
             entity.Property(o => o.Slug).IsRequired().HasMaxLength(100);
             entity.Property(o => o.SubscriptionTier).HasMaxLength(50);
+            entity.Property(o => o.TimeZone).IsRequired().HasMaxLength(64).HasDefaultValue("UTC");
         });
 
         modelBuilder.Entity<AuditLog>(entity =>
@@ -146,6 +160,7 @@ public class AppDbContext : DbContext
 
         ConfigureHr(modelBuilder);
         ConfigureAttendance(modelBuilder);
+        ConfigureLeave(modelBuilder);
 
         // Auto-apply the tenant boundary filter to every tenant-owned entity so
         // reads can never leak across organizations by accident.
@@ -225,6 +240,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Notes).HasMaxLength(2000);
             entity.Property(e => e.EmploymentStatus).HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.EmploymentType).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.LeaveEligible).HasDefaultValue(false);
 
             entity.HasIndex(e => new { e.OrganizationId, e.EmployeeNumber }).IsUnique();
             // One employee record per linked user account.
@@ -249,6 +265,11 @@ public class AppDbContext : DbContext
                 .WithMany(e => e.DirectReports)
                 .HasForeignKey(e => e.ReportingManagerId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.LeavePolicy)
+                .WithMany()
+                .HasForeignKey(e => e.LeavePolicyId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 
@@ -302,6 +323,106 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(c => c.AttendanceRecordId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
+    // Relational mapping for the Leave module: tenant-unique codes, enum-as-string
+    // storage, decimal precision for day/entitlement amounts, and Restrict deletes
+    // so referenced types/policies can't be orphaned. Tenant isolation and
+    // soft-delete filtering are applied generically by the query-filter loop.
+    private static void ConfigureLeave(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<LeaveType>(entity =>
+        {
+            entity.Property(t => t.Name).IsRequired().HasMaxLength(120);
+            entity.Property(t => t.Code).IsRequired().HasMaxLength(40);
+            entity.Property(t => t.Color).IsRequired().HasMaxLength(9);
+            entity.Property(t => t.GenderRestriction).HasConversion<string>().HasMaxLength(20);
+            entity.Property(t => t.MinDurationDays).HasPrecision(6, 2);
+            entity.Property(t => t.MaxDurationDays).HasPrecision(6, 2);
+            entity.Property(t => t.MaxCarryForwardDays).HasPrecision(6, 2);
+            entity.HasIndex(t => new { t.OrganizationId, t.Code }).IsUnique();
+        });
+
+        modelBuilder.Entity<LeavePolicy>(entity =>
+        {
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(120);
+            entity.Property(p => p.Code).IsRequired().HasMaxLength(40);
+            entity.Property(p => p.Description).HasMaxLength(1000);
+            entity.HasIndex(p => new { p.OrganizationId, p.Code }).IsUnique();
+
+            entity.HasMany(p => p.LeaveTypes)
+                .WithOne(l => l.LeavePolicy)
+                .HasForeignKey(l => l.LeavePolicyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LeavePolicyLeaveType>(entity =>
+        {
+            entity.Property(l => l.AccrualMethod).HasConversion<string>().HasMaxLength(20);
+            entity.Property(l => l.AnnualEntitlementDays).HasPrecision(6, 2);
+            // A leave type appears at most once per policy.
+            entity.HasIndex(l => new { l.LeavePolicyId, l.LeaveTypeId }).IsUnique();
+
+            entity.HasOne(l => l.LeaveType)
+                .WithMany()
+                .HasForeignKey(l => l.LeaveTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LeaveRequest>(entity =>
+        {
+            entity.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(r => r.StartPortion).HasConversion<string>().HasMaxLength(20);
+            entity.Property(r => r.EndPortion).HasConversion<string>().HasMaxLength(20);
+            entity.Property(r => r.Reason).IsRequired().HasMaxLength(1000);
+            entity.Property(r => r.ReviewNotes).HasMaxLength(1000);
+            entity.Property(r => r.DocumentUrl).HasMaxLength(500);
+            entity.Property(r => r.TotalDays).HasPrecision(6, 2);
+            entity.HasIndex(r => new { r.OrganizationId, r.Status });
+            entity.HasIndex(r => new { r.OrganizationId, r.EmployeeId, r.StartDate });
+
+            entity.HasOne(r => r.Employee)
+                .WithMany()
+                .HasForeignKey(r => r.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.LeaveType)
+                .WithMany()
+                .HasForeignKey(r => r.LeaveTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LeaveBalanceTransaction>(entity =>
+        {
+            entity.Property(b => b.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(b => b.Days).HasPrecision(8, 2);
+            entity.Property(b => b.Notes).HasMaxLength(500);
+            entity.HasIndex(b => new { b.OrganizationId, b.EmployeeId, b.LeaveTypeId, b.Year });
+
+            entity.HasOne(b => b.Employee)
+                .WithMany()
+                .HasForeignKey(b => b.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(b => b.LeaveType)
+                .WithMany()
+                .HasForeignKey(b => b.LeaveTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(b => b.LeaveRequest)
+                .WithMany()
+                .HasForeignKey(b => b.LeaveRequestId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Holiday>(entity =>
+        {
+            entity.Property(h => h.Name).IsRequired().HasMaxLength(150);
+            entity.Property(h => h.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(h => h.Region).HasMaxLength(120);
+            entity.Property(h => h.Description).HasMaxLength(500);
+            entity.HasIndex(h => new { h.OrganizationId, h.Date });
         });
     }
 }

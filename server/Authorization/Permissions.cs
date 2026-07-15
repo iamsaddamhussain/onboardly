@@ -29,15 +29,25 @@ public static class Permissions
     public const string EditJobTitles = "jobtitles.edit";
     public const string DeleteJobTitles = "jobtitles.delete";
 
+    public const string ViewOrgChart = "orgchart.view";
+
     // --- Attendance (organization-scoped) ---
     public const string ViewAttendance = "attendance.view";
     public const string CreateAttendance = "attendance.create";
     public const string EditAttendance = "attendance.edit";
     public const string DeleteAttendance = "attendance.delete";
-    public const string CheckInAttendance = "attendance.checkin";
-    public const string CheckOutAttendance = "attendance.checkout";
     public const string ApproveAttendance = "attendance.approve";
     public const string ExportAttendance = "attendance.export";
+
+    // --- Leave (organization-scoped) ---
+    public const string ViewLeave = "leave.view";
+    public const string ApplyLeave = "leave.apply";
+    public const string ApproveLeave = "leave.approve";
+    public const string ManageLeaveTypes = "leave.manage_types";
+    public const string ManageLeavePolicies = "leave.manage_policies";
+    public const string ManageLeaveBalances = "leave.manage_balances";
+    public const string ViewHolidays = "holidays.view";
+    public const string ManageHolidays = "holidays.manage";
 
     // --- Global (platform-level) permissions, not bound to any tenant ---
     public const string PlatformManageOrganizations = "platform.manage_organizations";
@@ -67,14 +77,21 @@ public static class Permissions
         CreateJobTitles,
         EditJobTitles,
         DeleteJobTitles,
+        ViewOrgChart,
         ViewAttendance,
         CreateAttendance,
         EditAttendance,
         DeleteAttendance,
-        CheckInAttendance,
-        CheckOutAttendance,
         ApproveAttendance,
         ExportAttendance,
+        ViewLeave,
+        ApplyLeave,
+        ApproveLeave,
+        ManageLeaveTypes,
+        ManageLeavePolicies,
+        ManageLeaveBalances,
+        ViewHolidays,
+        ManageHolidays,
     };
 
     // Global/platform permissions (IsGlobal = true).

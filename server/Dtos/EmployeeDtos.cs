@@ -19,6 +19,7 @@ public record EmployeeListItem(
     DateTime JoiningDate,
     string EmploymentStatus,
     string EmploymentType,
+    bool LeaveEligible,
     string? WorkEmail,
     string? WorkPhone,
     DateTime CreatedAt,
@@ -41,6 +42,7 @@ public record EmployeeDetail(
     DateTime JoiningDate,
     string EmploymentStatus,
     string EmploymentType,
+    bool LeaveEligible,
     string? WorkEmail,
     string? WorkPhone,
     string? Notes,
@@ -50,6 +52,19 @@ public record EmployeeDetail(
 
 // Lightweight option for employee typeahead lookups (reporting/department mgr).
 public record EmployeeLookupItem(int Id, string EmployeeNumber, string FullName);
+
+// A node in the reporting hierarchy (org chart). The client assembles the tree
+// from this flat list using ReportingManagerId.
+public record OrgChartNode(
+    int Id,
+    string EmployeeNumber,
+    string FullName,
+    string? JobTitleName,
+    string? DepartmentName,
+    string EmploymentStatus,
+    int? ReportingManagerId,
+    int? UserId
+);
 
 // A user account that can be linked to a new employee record.
 public record AssignableUserItem(int Id, string FullName, string Email);
@@ -74,6 +89,8 @@ public record SaveEmployeeRequest(
 
     [Required(ErrorMessage = "Employment type is required.")]
     string EmploymentType,
+
+    bool LeaveEligible,
 
     [EmailAddress(ErrorMessage = "Enter a valid work email address.")]
     [MaxLength(256)]

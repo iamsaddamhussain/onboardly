@@ -21,7 +21,10 @@ public record UserResponse(
     string? OrganizationName,
     // Tenant a global user is currently viewing via the org selector, if any.
     int? ActiveOrganizationId,
-    string? ActiveOrganizationName);
+    string? ActiveOrganizationName,
+    // True when this user is linked to a leave-eligible employee record, i.e. is
+    // allowed to use the self-service leave system.
+    bool CanUseLeave);
 
 public record ProfileResponse(
     int Id,

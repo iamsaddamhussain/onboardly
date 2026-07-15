@@ -18,6 +18,10 @@ public interface IRoleRepository
 
     Task SetPermissions(Role role, int[] permissionIds);
 
+    // Ids of the users currently assigned the given role — used to invalidate
+    // their cached permissions when the role's permissions change.
+    Task<IReadOnlyList<int>> GetUserIds(int roleId);
+
     Task Delete(Role role);
 
     // Used by the controller's validation to keep role names unique.

@@ -9,8 +9,9 @@ import { FormInput } from "@/components/FormInput"
 import { FormSelect } from "@/components/FormSelect"
 import { ServersideLookup } from "@/components/ServersideLookup"
 import { AppButton } from "@/components/AppButton"
+import { FormActions } from "@/components/FormActions"
 import { DatePicker } from "@/components/DatePicker"
-import { Input } from "@/components/ui/input"
+import { TimePicker } from "@/components/TimePicker"
 import { Label } from "@/components/ui/label"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useResource, useResourceMutation } from "@/lib/query"
@@ -213,22 +214,18 @@ export default function AttendanceFormPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="checkIn">{t("attendanceForm.checkIn")}</Label>
-              <Input
+              <TimePicker
                 id="checkIn"
-                type="time"
                 value={form.checkInTime}
-                onChange={(e) => update("checkInTime", e.target.value)}
-                className="rounded-none"
+                onChange={(v) => update("checkInTime", v)}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="checkOut">{t("attendanceForm.checkOut")}</Label>
-              <Input
+              <TimePicker
                 id="checkOut"
-                type="time"
                 value={form.checkOutTime}
-                onChange={(e) => update("checkOutTime", e.target.value)}
-                className="rounded-none"
+                onChange={(v) => update("checkOutTime", v)}
               />
             </div>
           </div>
@@ -256,18 +253,7 @@ export default function AttendanceFormPage() {
           />
         </FormSection>
 
-        <div className="flex justify-end gap-2">
-          <AppButton type="button" variant="outline" onClick={requestLeave}>
-            {t("common.cancel")}
-          </AppButton>
-          <AppButton
-            type="submit"
-            loading={mutation.isPending}
-            loadingText={t("common.saving")}
-          >
-            {t("common.saveChanges")}
-          </AppButton>
-        </div>
+        <FormActions editing onCancel={requestLeave} saving={mutation.isPending} />
       </form>
 
       <ConfirmDialog

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Network, Trash2, Users } from "lucide-react"
+import { ArrowLeft, Network, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Page } from "@/components/Page"
@@ -8,6 +8,7 @@ import { FormSection } from "@/components/FormSection"
 import { FormInput } from "@/components/FormInput"
 import { ServersideLookup } from "@/components/ServersideLookup"
 import { AppButton } from "@/components/AppButton"
+import { FormActions } from "@/components/FormActions"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -242,28 +243,13 @@ export default function DepartmentFormPage() {
           </div>
         </FormSection>
 
-        <div className="flex justify-end gap-2">
-          <AppButton type="button" variant="outline" onClick={requestLeave}>
-            {t("common.cancel")}
-          </AppButton>
-          {editing && canDelete && (
-            <AppButton
-              type="button"
-              variant="destructive"
-              icon={Trash2}
-              onClick={() => setDeleteOpen(true)}
-            >
-              {t("common.delete")}
-            </AppButton>
-          )}
-          <AppButton
-            type="submit"
-            loading={mutation.isPending}
-            loadingText={editing ? t("common.saving") : t("common.creating")}
-          >
-            {editing ? t("common.saveChanges") : t("common.create")}
-          </AppButton>
-        </div>
+        <FormActions
+          editing={editing}
+          onCancel={requestLeave}
+          saving={mutation.isPending}
+          showDelete={editing && canDelete}
+          onDelete={() => setDeleteOpen(true)}
+        />
       </form>
 
       <ConfirmDialog

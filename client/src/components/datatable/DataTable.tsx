@@ -101,10 +101,10 @@ export function DataTable<Row>({
       {beforeTable}
 
       <Card className="gap-0 overflow-hidden rounded-none p-0">
-        {/* Thin loading indicator that doesn't shift layout. */}
-        <div className="h-0.5 w-full overflow-hidden">
+        {/* Thin indeterminate progress bar that doesn't shift layout. */}
+        <div className="relative h-0.5 w-full overflow-hidden">
           {table.isFetching && (
-            <div className="h-full w-1/3 animate-pulse bg-primary" />
+            <div className="absolute inset-y-0 animate-indeterminate bg-primary motion-reduce:inset-x-0 motion-reduce:animate-none motion-reduce:opacity-60" />
           )}
         </div>
 
@@ -153,16 +153,7 @@ export function DataTable<Row>({
               </tr>
             </thead>
             <tbody>
-              {table.isFetching && table.rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={colCount}
-                    className="px-4 py-8 text-center text-muted-foreground"
-                  >
-                    {t("table.loading")}
-                  </td>
-                </tr>
-              ) : table.rows.length === 0 ? (
+              {table.rows.length === 0 && !table.isFetching ? (
                 <tr>
                   <td colSpan={colCount} className="px-4 py-16">
                     <div className="flex flex-col items-center gap-3 text-muted-foreground" aria-label={emptyMessageText}>

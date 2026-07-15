@@ -44,6 +44,12 @@ builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<ICodeGenerator, CodeGenerator>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<ILeaveTypeRepository, LeaveTypeRepository>();
+builder.Services.AddScoped<ILeavePolicyRepository, LeavePolicyRepository>();
+builder.Services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>();
+builder.Services.AddScoped<ILeaveBalanceRepository, LeaveBalanceRepository>();
+builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<IUserAccessService, UserAccessService>();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddMemoryCache();
@@ -53,6 +59,9 @@ builder.Services.AddHttpContextAccessor();
 // Configurable delivery (Sync/Queue) + pluggable provider (Log/SMTP-Mailtrap),
 // with Razor (.cshtml) templates rendered by RazorLight.
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+
+// --- Attendance policy (office hours + auto-checkout sweep) ---
+builder.Services.Configure<AttendanceOptions>(builder.Configuration.GetSection(AttendanceOptions.SectionName));
 
 // Embedded Razor templates engine (templates live in Services/Email/Templates).
 builder.Services.AddSingleton<IRazorLightEngine>(
@@ -175,6 +184,23 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
     await DbSeeder.SeedAsync(scope.ServiceProvider);
+}
+
+// Schedule the recurring missing-punch sweep: any day left open past its office
+// close time is flagged MissingPunch for HR review (actual times are never
+// auto-filled — see AttendanceService). Resolve the manager from DI (uses the
+// configured storage) rather than the JobStorage.Current global, which isn't
+// initialized until the Hangfire server starts.
+var attendanceCron = builder.Configuration
+    .GetSection(AttendanceOptions.SectionName)
+    .Get<AttendanceOptions>()?.AutoCheckoutCron ?? "*/30 * * * *";
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobs.AddOrUpdate<IAttendanceService>(
+        "attendance-missing-punch-sweep",
+        service => service.FlagMissingPunchesAsync(),
+        attendanceCron);
 }
 
 if (app.Environment.IsDevelopment())
